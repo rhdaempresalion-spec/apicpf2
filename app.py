@@ -202,7 +202,7 @@ def validar_cpf_rapido(cpf):
 
 
 def buscar_mensagens_conversa(conversation_id, api_key):
-    """Busca mensagens da conversa."""
+    """Busca apenas a última mensagem recebida da conversa."""
     if not api_key:
         return None
     
@@ -221,7 +221,14 @@ def buscar_mensagens_conversa(conversation_id, api_key):
         messages = data.get('messages', data.get('data', [])) if isinstance(data, dict) else data
         
         if isinstance(messages, list):
-            return [m for m in messages if m.get('received') == True]
+            # Filtra apenas mensagens recebidas (do lead)
+            received_messages = [m for m in messages if m.get('received') == True]
+            
+            # Ordena por data (mais recente primeiro) e pega as últimas 3
+            if received_messages:
+                received_messages.sort(key=lambda x: x.get('createdAt', x.get('timestamp', '')), reverse=True)
+                return received_messages[:3]  # Retorna apenas as últimas 3 mensagens
+            return []
         return messages
     except:
         return None
