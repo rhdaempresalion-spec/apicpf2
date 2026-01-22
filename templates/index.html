@@ -1175,15 +1175,16 @@ Caso precise de mais informações, estou à disposição.</textarea>
                                 <thead>
                                     <tr>
                                         <th>Data/Hora</th>
-                                        <th>Tipo</th>
-                                        <th>CPF</th>
+                                        <th>Lead</th>
+                                        <th>Telefone</th>
+                                        <th>CPF Consultado</th>
                                         <th>Status</th>
                                         <th>Detalhes</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted py-4">
+                                        <td colspan="6" class="text-center text-muted py-4">
                                             <i class="bi bi-inbox fs-1 d-block mb-2"></i>
                                             Nenhum log registrado ainda
                                         </td>
@@ -1242,8 +1243,12 @@ Caso precise de mais informações, estou à disposição.</textarea>
         document.addEventListener('DOMContentLoaded', function() {
             carregarConfig();
             atualizarPreview();
+            carregarLogs();
             document.getElementById('apiUrl').value = window.location.origin;
             document.getElementById('messageTemplate').addEventListener('input', atualizarPreview);
+            
+            // Atualiza logs a cada 30 segundos
+            setInterval(carregarLogs, 30000);
         });
 
         function carregarConfig() {
@@ -1422,7 +1427,60 @@ Caso precise de mais informações, estou à disposição.`;
         }
 
         function limparLogs() {
-            showToast('Logs limpos!', 'success');
+            fetch('/api/logs', { method: 'DELETE' })
+                .then(r => r.json())
+                .then(data => {
+                    showToast('Logs limpos!', 'success');
+                    carregarLogs();
+                });
+        }
+
+        function carregarLogs() {
+            fetch('/api/logs')
+                .then(r => r.json())
+                .then(data => {
+                    const tbody = document.querySelector('#logsTable tbody');
+                    if (data.logs && data.logs.length > 0) {
+                        tbody.innerHTML = data.logs.map(log => `
+                            <tr>
+                                <td><small>${log.data}</small></td>
+                                <td><strong>${log.lead_name || '-'}</strong></td>
+                                <td><a href="https://wa.me/${log.lead_phone}" target="_blank" class="text-decoration-none">${formatPhone(log.lead_phone)}</a></td>
+                                <td><code>${log.cpf}</code></td>
+                                <td><span class="badge ${log.status === 'Sucesso' ? 'bg-success' : log.status === 'Parcial' ? 'bg-warning' : 'bg-danger'}">${log.status}</span></td>
+                                <td><small class="text-muted">${log.detalhes}</small></td>
+                            </tr>
+                        `).join('');
+                    } else {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                    Nenhum log registrado ainda
+                                </td>
+                            </tr>
+                        `;
+                    }
+                    
+                    // Atualiza estatísticas
+                    document.getElementById('totalConsultas').textContent = data.logs ? data.logs.length : 0;
+                    const sucessos = data.logs ? data.logs.filter(l => l.status === 'Sucesso').length : 0;
+                    document.getElementById('msgEnviadas').textContent = sucessos;
+                    const taxa = data.logs && data.logs.length > 0 ? Math.round((sucessos / data.logs.length) * 100) : 100;
+                    document.getElementById('taxaSucesso').textContent = taxa + '%';
+                });
+        }
+
+        function formatPhone(phone) {
+            if (!phone || phone === '-') return '-';
+            // Remove caracteres não numéricos
+            const nums = phone.replace(/\D/g, '');
+            if (nums.length === 13) {
+                return `+${nums.slice(0,2)} (${nums.slice(2,4)}) ${nums.slice(4,9)}-${nums.slice(9)}`;
+            } else if (nums.length === 11) {
+                return `(${nums.slice(0,2)}) ${nums.slice(2,7)}-${nums.slice(7)}`;
+            }
+            return phone;
         }
 
         // ==================== TOAST ====================
