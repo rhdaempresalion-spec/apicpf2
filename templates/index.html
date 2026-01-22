@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPF API - Painel de Controle</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e1b4b;
+            --light: #f8fafc;
+            --sidebar-width: 280px;
+        }
+
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: #f1f5f9;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--dark) 0%, #312e81 100%);
+            padding: 0;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+            text-decoration: none;
+        }
+
+        .sidebar-logo i {
+            font-size: 2rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .sidebar-logo span {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+
+        .menu-category {
+            color: rgba(255,255,255,0.4);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 15px 25px 10px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 25px;
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+            cursor: pointer;
+        }
+
+        .menu-item:hover, .menu-item.active {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border-left-color: var(--primary);
+        }
+
+        .menu-item i {
+            font-size: 1.1rem;
+            width: 24px;
+        }
+
+        .menu-item .badge {
+            margin-left: auto;
+            font-size: 0.65rem;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+        }
+
+        /* Top Bar */
+        .topbar {
+            background: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .topbar-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .topbar-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        /* Content Area */
+        .content-area {
+            padding: 30px;
+        }
+
+        /* Cards */
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+        }
+
+        .stat-card .icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .stat-card .icon.primary { background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); }
+        .stat-card .icon.success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .stat-card .icon.warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .stat-card .icon.danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .stat-card .label {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        /* Config Card */
+        .config-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+        }
+
+        .config-card-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .config-card-header i {
+            font-size: 1.3rem;
+            color: var(--primary);
+        }
+
+        .config-card-header h5 {
+            margin: 0;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .config-card-body {
+            padding: 25px;
+        }
+
+        /* Form Styles */
+        .form-label {
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px 15px;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        .input-group-text {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-right: none;
+            border-radius: 10px 0 0 10px;
+        }
+
+        .input-group .form-control {
+            border-radius: 0 10px 10px 0;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+            background: linear-gradient(135deg, var(--primary-dark) 0%, #7c3aed 100%);
+        }
+
+        .btn-outline-primary {
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 500;
+        }
+
+        .btn-outline-primary:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Code Block */
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            max-height: 400px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .code-block::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .code-block::-webkit-scrollbar-track {
+            background: #334155;
+            border-radius: 4px;
+        }
+
+        .code-block::-webkit-scrollbar-thumb {
+            background: #64748b;
+            border-radius: 4px;
+        }
+
+        /* Template Variables */
+        .template-var {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin: 4px;
+        }
+
+        .template-var:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+
+        /* Preview Box */
+        .preview-box {
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+            border: 2px solid #86efac;
+            border-radius: 12px;
+            padding: 20px;
+            white-space: pre-wrap;
+            font-size: 0.95rem;
+            color: #166534;
+        }
+
+        /* Status Badge */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-badge.online {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-badge.offline {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-badge.warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Tabs */
+        .nav-pills .nav-link {
+            color: #64748b;
+            border-radius: 10px;
+            padding: 10px 20px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .nav-pills .nav-link.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+
+        .nav-pills .nav-link:hover:not(.active) {
+            background: #f1f5f9;
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        .custom-toast {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Section */
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Switch */
+        .form-switch .form-check-input {
+            width: 50px;
+            height: 26px;
+            cursor: pointer;
+        }
+
+        .form-switch .form-check-input:checked {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="#" class="sidebar-logo">
+                <i class="bi bi-cpu-fill"></i>
+                <span>CPF API</span>
+            </a>
+        </div>
+        <nav class="sidebar-menu">
+            <div class="menu-category">Principal</div>
+            <a class="menu-item active" data-section="dashboard">
+                <i class="bi bi-grid-1x2-fill"></i>
+                <span>Dashboard</span>
+            </a>
+            <a class="menu-item" data-section="config-api">
+                <i class="bi bi-key-fill"></i>
+                <span>Chaves de API</span>
+            </a>
+            
+            <div class="menu-category">Personalização</div>
+            <a class="menu-item" data-section="template">
+                <i class="bi bi-chat-square-text-fill"></i>
+                <span>Template da Mensagem</span>
+            </a>
+            <a class="menu-item" data-section="campos">
+                <i class="bi bi-list-check"></i>
+                <span>Campos Exibidos</span>
+            </a>
+            <a class="menu-item" data-section="estilo">
+                <i class="bi bi-palette-fill"></i>
+                <span>Estilo da Mensagem</span>
+            </a>
+            
+            <div class="menu-category">Integração</div>
+            <a class="menu-item" data-section="javascript">
+                <i class="bi bi-code-slash"></i>
+                <span>Código JavaScript</span>
+            </a>
+            <a class="menu-item" data-section="webhook">
+                <i class="bi bi-link-45deg"></i>
+                <span>Webhooks</span>
+            </a>
+            
+            <div class="menu-category">Ferramentas</div>
+            <a class="menu-item" data-section="teste">
+                <i class="bi bi-play-circle-fill"></i>
+                <span>Testar Consulta</span>
+            </a>
+            <a class="menu-item" data-section="logs">
+                <i class="bi bi-journal-text"></i>
+                <span>Logs</span>
+                <span class="badge bg-primary">Novo</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <header class="topbar">
+            <div>
+                <button class="btn btn-link d-lg-none" onclick="toggleSidebar()">
+                    <i class="bi bi-list fs-4"></i>
+                </button>
+                <span class="topbar-title" id="pageTitle">Dashboard</span>
+            </div>
+            <div class="topbar-actions">
+                <span class="status-badge online" id="apiStatusBadge">
+                    API Online
+                </span>
+                <button class="btn btn-outline-primary btn-sm" onclick="location.reload()">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- Dashboard Section -->
+            <section class="section active" id="section-dashboard">
+                <div class="row g-4 mb-4">
+                    <div class="col-md-6 col-lg-3">
+                        <div class="stat-card">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="value" id="totalConsultas">0</div>
+                                    <div class="label">Consultas Hoje</div>
+                                </div>
+                                <div class="icon primary">
+                                    <i class="bi bi-search"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="stat-card">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="value" id="msgEnviadas">0</div>
+                                    <div class="label">Mensagens Enviadas</div>
+                                </div>
+                                <div class="icon success">
+                                    <i class="bi bi-chat-dots"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="stat-card">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="value" id="taxaSucesso">100%</div>
+                                    <div class="label">Taxa de Sucesso</div>
+                                </div>
+                                <div class="icon warning">
+                                    <i class="bi bi-graph-up"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-lg-3">
+                        <div class="stat-card">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="value status-badge online" id="statusApi">Online</div>
+                                    <div class="label">Status da API</div>
+                                </div>
+                                <div class="icon danger">
+                                    <i class="bi bi-activity"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-lg-8">
+                        <div class="config-card">
+                            <div class="config-card-header">
+                                <i class="bi bi-lightning-charge-fill"></i>
+                                <h5>Início Rápido</h5>
+                            </div>
+                            <div class="config-card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="p-3 bg-light rounded-3 h-100">
+                                            <h6><i class="bi bi-1-circle-fill text-primary me-2"></i>Configure as Chaves</h6>
+                                            <p class="text-muted small mb-2">Adicione suas chaves de API do CRM DataCrazy e da API de CPF.</p>
+                                            <button class="btn btn-sm btn-primary" onclick="showSection('config-api')">
+                                                Configurar <i class="bi bi-arrow-right"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="p-3 bg-light rounded-3 h-100">
+                                            <h6><i class="bi bi-2-circle-fill text-primary me-2"></i>Personalize a Mensagem</h6>
+                                            <p class="text-muted small mb-2">Customize como a resposta será enviada para o lead.</p>
+                                            <button class="btn btn-sm btn-primary" onclick="showSection('template')">
+                                                Personalizar <i class="bi bi-arrow-right"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="p-3 bg-light rounded-3 h-100">
+                                            <h6><i class="bi bi-3-circle-fill text-primary me-2"></i>Gere o Código JS</h6>
+                                            <p class="text-muted small mb-2">Copie o código JavaScript para usar no CRM DataCrazy.</p>
+                                            <button class="btn btn-sm btn-primary" onclick="showSection('javascript')">
+                                                Gerar Código <i class="bi bi-arrow-right"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="p-3 bg-light rounded-3 h-100">
+                                            <h6><i class="bi bi-4-circle-fill text-primary me-2"></i>Teste a Consulta</h6>
+                                            <p class="text-muted small mb-2">Verifique se tudo está funcionando corretamente.</p>
+                                            <button class="btn btn-sm btn-primary" onclick="showSection('teste')">
+                                                Testar <i class="bi bi-arrow-right"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="config-card h-100">
+                            <div class="config-card-header">
+                                <i class="bi bi-info-circle-fill"></i>
+                                <h5>Status das Integrações</h5>
+                            </div>
+                            <div class="config-card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                                    <div>
+                                        <strong>CRM DataCrazy</strong>
+                                        <div class="text-muted small">Integração principal</div>
+                                    </div>
+                                    <span class="status-badge" id="crmStatusBadge">Verificando...</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-3 pb-3 border-bottom">
+                                    <div>
+                                        <strong>API de CPF</strong>
+                                        <div class="text-muted small">cpf-brasil.org</div>
+                                    </div>
+                                    <span class="status-badge" id="cpfStatusBadge">Verificando...</span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>WhatsApp</strong>
+                                        <div class="text-muted small">Via CRM</div>
+                                    </div>
+                                    <span class="status-badge online">Conectado</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Config API Section -->
+            <section class="section" id="section-config-api">
+                <div class="row g-4">
+                    <div class="col-lg-8">
+                        <div class="config-card">
+                            <div class="config-card-header">
+                                <i class="bi bi-key-fill"></i>
+                                <h5>Chaves de API</h5>
+                            </div>
+                            <div class="config-card-body">
+                                <form id="configForm">
+                                    <div class="mb-4">
+                                        <label class="form-label">
+                                            <i class="bi bi-building me-1"></i>
+                                            Chave API CRM DataCrazy
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-shield-lock"></i></span>
+                                            <input type="password" class="form-control" id="crmApiKey" 
+                                                   placeholder="dc_eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+                                            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('crmApiKey')">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </div>
+                                        <div class="form-text">
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            Encontre em: CRM DataCrazy → Configurações → Integrações → API
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-4">
+                                        <label class="form-label">
+                                            <i class="bi bi-person-badge me-1"></i>
+                                            Token API de CPF
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-shield-lock"></i></span>
+                                            <input type="password" class="form-control" id="cpfApiToken" 
+                                                   placeholder="7de282c1a84728bacfacc8e584af95c7">
+                                            <button class="btn btn-outline-secondary" type="button" onclick="togglePassword('cpfApiToken')">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </div>
+                                        <div class="form-text">
+                                            <i class="bi bi-info-circle me-1"></i>
+                                            Obtenha em: <a href="https://dash.cpf-brasil.org" target="_blank">dash.cpf-brasil.org</a>
+                                        </div>
+                                    </div>
+
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-save me-2"></i>Salvar Configurações
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="config-card">
+                            <div class="config-card-header">
+                                <i class="bi bi-question-circle-fill"></i>
+                                <h5>Ajuda</h5>
+                            </div>
+                            <div class="config-card-body">
+                                <div class="mb-3">
+                                    <h6>Como obter a chave do CRM?</h6>
+                                    <ol class="small text-muted">
+                                        <li>Acesse o CRM DataCrazy</li>
+                                        <li>Vá em Configurações</li>
+                                        <li>Clique em Integrações → API</li>
+                                        <li>Copie a chave gerada</li>
+                                    </ol>
+                                </div>
+                                <div>
+                                    <h6>Como obter o token de CPF?</h6>
+                                    <ol class="small text-muted">
+                                        <li>Acesse dash.cpf-brasil.org</li>
+                                        <li>Crie uma conta ou faça login</li>
+                                        <li>Vá em API → Token</li>
+                                        <li>Copie seu token</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Template Section -->
+            <section class="section" id="section-template">
+                <div class="row g-4">
+                    <div class="col-lg-8">
+                        <div class="config-card">
+                            <div class="config-card-header">
+                                <i class="bi bi-chat-square-text-fill"></i>
+                                <h5>Template da Mensagem</h5>
+                            </div>
+                            <div class="config-card-body">
+                                <div class="mb-4">
+                                    <label class="form-label">Variáveis Disponíveis</label>
+                                    <p class="text-muted small">Clique para inserir no template:</p>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <span class="template-var" onclick="insertVar('{cpf_mascarado}')">
+                                            <i class="bi bi-shield-lock me-1"></i>{cpf_mascarado}
+                                        </span>
+                                        <span class="template-var" onclick="insertVar('{cpf}')">
+                                            <i class="bi bi-hash me-1"></i>{cpf}
+                                        </span>
+                                        <span class="template-var" onclick="insertVar('{nome}')">
+                                            <i class="bi bi-person me-1"></i>{nome}
+                                        </span>
+                                        <span class="template-var" onclick="insertVar('{nascimento}')">
+                                            <i class="bi bi-calendar me-1"></i>{nascimento}
+                                        </span>
+                                        <span class="template-var" onclick="insertVar('{sexo}')">
+                                            <i class="bi bi-gender-ambiguous me-1"></i>{sexo}
+                                        </span>
+                                        <span class="template-var" onclick="insertVar('{nome_mae}')">
+                                            <i class="bi bi-person-heart me-1"></i>{nome_mae}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <form id="templateForm">
+                                    <div class="mb-4">
+                                        <label class="form-label">Mensagem de Resposta</label>
+                                        <textarea class="form-control" id="messageTemplate" rows="12" 
+                                                  style="font-family: monospace;">Olá! Encontrei os dados do CPF consultado:
+
+CPF: {cpf_mascarado}
+Nome: {nome}
+Nascimento: {nascimento}
+Sexo: {sexo}
+Mãe: {nome_mae}
+
+Caso precise de mais informações, estou à disposição.</textarea>
+                                    </div>
+                                    
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="bi bi-save me-2"></i>Salvar Template
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="resetTemplate()">
+                                            <i class="bi bi-arrow-counterclockwise me-2"></i>Restaurar Padrão
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="config-card">
+                            <div class="config-card-header">
+                                <i class="bi bi-eye-fill"></i>
+                                <h5>Pré-visualização</h5>
+                            </div>
+                            <div class="config-card-body">
+                                <div class="preview-box" id="templatePreview">
+                                    Carregando...
+                                </div>
+                                <div class="mt-3 text-muted small">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Esta é uma prévia de como a mensagem será enviada para o lead.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Campos Section -->
+            <section class="section" id="section-campos">
+                <div class="config-card">
+                    <div class="config-card-header">
+                        <i class="bi bi-list-check"></i>
+                        <h5>Campos Exibidos na Mensagem</h5>
+                    </div>
+                    <div class="config-card-body">
+                        <p class="text-muted mb-4">Selecione quais informações serão exibidas na mensagem enviada ao lead:</p>
+                        
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="campo_cpf" checked>
+                                    <label class="form-check-label" for="campo_cpf">
+                                        <strong>CPF (Mascarado)</strong>
+                                        <div class="text-muted small">Ex: 123.***.**56-78</div>
+                                    </label>
+                                </div>
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="campo_nome" checked>
+                                    <label class="form-check-label" for="campo_nome">
+                                        <strong>Nome Completo</strong>
+                                        <div class="text-muted small">Nome do titular do CPF</div>
+                                    </label>
+                                </div>
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="campo_nascimento" checked>
+                                    <label class="form-check-label" for="campo_nascimento">
+                                        <strong>Data de Nascimento</strong>
+                                        <div class="text-muted small">Ex: 01/01/1990</div>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="campo_sexo" checked>
+                                    <label class="form-check-label" for="campo_sexo">
+                                        <strong>Sexo</strong>
+                                        <div class="text-muted small">Masculino ou Feminino</div>
+                                    </label>
+                                </div>
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="campo_mae" checked>
+                                    <label class="form-check-label" for="campo_mae">
+                                        <strong>Nome da Mãe</strong>
+                                        <div class="text-muted small">Nome completo da mãe</div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <button class="btn btn-primary" onclick="salvarCampos()">
+                            <i class="bi bi-save me-2"></i>Salvar Configurações
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Estilo Section -->
+            <section class="section" id="section-estilo">
+                <div class="config-card">
+                    <div class="config-card-header">
+                        <i class="bi bi-palette-fill"></i>
+                        <h5>Estilo da Mensagem</h5>
+                    </div>
+                    <div class="config-card-body">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="mb-4">
+                                    <label class="form-label">Saudação Inicial</label>
+                                    <input type="text" class="form-control" id="saudacao" 
+                                           value="Olá! Encontrei os dados do CPF consultado:">
+                                </div>
+                                <div class="mb-4">
+                                    <label class="form-label">Mensagem Final</label>
+                                    <input type="text" class="form-control" id="msgFinal" 
+                                           value="Caso precise de mais informações, estou à disposição.">
+                                </div>
+                                <div class="mb-4">
+                                    <label class="form-label">Mensagem de Erro (CPF não encontrado)</label>
+                                    <textarea class="form-control" id="msgErro" rows="3">Desculpe, não foi possível consultar os dados do CPF informado. Por favor, verifique se o número está correto e tente novamente.</textarea>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-4">
+                                    <label class="form-label">Formato do CPF</label>
+                                    <select class="form-select" id="formatoCpf">
+                                        <option value="mascarado" selected>Mascarado (123.***.**56-78)</option>
+                                        <option value="parcial">Parcial (***456789**)</option>
+                                        <option value="completo">Completo (123.456.789-00)</option>
+                                    </select>
+                                </div>
+                                <div class="mb-4">
+                                    <label class="form-label">Usar Emojis</label>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="usarEmojis">
+                                        <label class="form-check-label" for="usarEmojis">
+                                            Adicionar emojis na mensagem
+                                        </label>
+                                    </div>
+                                    <div class="form-text text-warning">
+                                        <i class="bi bi-exclamation-triangle me-1"></i>
+                                        Emojis em excesso podem causar banimento no WhatsApp
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-primary" onclick="salvarEstilo()">
+                            <i class="bi bi-save me-2"></i>Salvar Estilo
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- JavaScript Section -->
+            <section class="section" id="section-javascript">
+                <div class="row g-4">
+                    <div class="col-lg-8">
+                        <div class="config-card">
+                            <div class="config-card-header">
+                                <i class="bi bi-code-slash"></i>
+                                <h5>Código JavaScript para o CRM</h5>
+                            </div>
+                            <div class="config-card-body">
+                                <div class="alert alert-info d-flex align-items-center">
+                                    <i class="bi bi-info-circle-fill me-2 fs-5"></i>
+                                    <div>
+                                        Cole este código na ação <strong>"Executar JavaScript"</strong> da sua automação no CRM DataCrazy.
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-4">
+                                    <label class="form-label">URL da sua API</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                                        <input type="text" class="form-control" id="apiUrl" 
+                                               placeholder="https://sua-api.railway.app">
+                                    </div>
+                                    <div class="form-text">Insira a URL onde sua API está hospedada</div>
+                                </div>
+                                
+                                <button class="btn btn-primary mb-4" onclick="gerarJavascript()">
+                                    <i class="bi bi-lightning-charge me-2"></i>Gerar Código JavaScript
+                                </button>
+                                
+                                <div class="position-relative">
+                                    <pre class="code-block" id="javascriptCode">// Clique em "Gerar Código JavaScript" acima</pre>
+                                    <button class="btn btn-light btn-sm position-absolute top-0 end-0 m-2" onclick="copiarCodigo()">
+                                        <i class="bi bi-clipboard me-1"></i>Copiar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="config-card">
+                            <div class="config-card-header">
+                                <i class="bi bi-book-fill"></i>
+                                <h5>Instruções</h5>
+                            </div>
+                            <div class="config-card-body">
+                                <ol class="mb-0">
+                                    <li class="mb-3">
+                                        <strong>Acesse o CRM DataCrazy</strong>
+                                        <div class="text-muted small">Vá em Automações</div>
+                                    </li>
+                                    <li class="mb-3">
+                                        <strong>Crie uma nova automação</strong>
+                                        <div class="text-muted small">Ou edite uma existente</div>
+                                    </li>
+                                    <li class="mb-3">
+                                        <strong>Configure o gatilho</strong>
+                                        <div class="text-muted small">Ex: "Quando lead enviar mensagem"</div>
+                                    </li>
+                                    <li class="mb-3">
+                                        <strong>Adicione a ação</strong>
+                                        <div class="text-muted small">"Executar JavaScript"</div>
+                                    </li>
+                                    <li>
+                                        <strong>Cole o código gerado</strong>
+                                        <div class="text-muted small">E salve a automação</div>
+                                    </li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Webhook Section -->
+            <section class="section" id="section-webhook">
+                <div class="config-card">
+                    <div class="config-card-header">
+                        <i class="bi bi-link-45deg"></i>
+                        <h5>Endpoints da API</h5>
+                    </div>
+                    <div class="config-card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Método</th>
+                                        <th>Endpoint</th>
+                                        <th>Descrição</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><span class="badge bg-success">GET</span></td>
+                                        <td><code>/health</code></td>
+                                        <td>Verifica se a API está online</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-primary">POST</span></td>
+                                        <td><code>/api/webhook/datacrazy</code></td>
+                                        <td>Webhook principal do CRM DataCrazy</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-primary">POST</span></td>
+                                        <td><code>/api/consultar-cpf</code></td>
+                                        <td>Consulta CPF diretamente</td>
+                                    </tr>
+                                    <tr>
+                                        <td><span class="badge bg-warning text-dark">GET/POST</span></td>
+                                        <td><code>/api/config</code></td>
+                                        <td>Gerencia configurações da API</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <h6 class="mt-4 mb-3">Exemplo de Requisição</h6>
+                        <pre class="code-block">curl -X POST https://sua-api.railway.app/api/webhook/datacrazy \
+  -H "Content-Type: application/json" \
+  -d '{
+    "conversationId": "696e3ce76f116fa520361fe4",
+    "leadPhone": "5511999999999",
+    "mensagem": "Meu CPF é 123.456.789-00"
+  }'</pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Teste Section -->
+            <section class="section" id="section-teste">
+                <div class="row g-4">
+                    <div class="col-lg-6">
+                        <div class="config-card">
+                            <div class="config-card-header">
+                                <i class="bi bi-play-circle-fill"></i>
+                                <h5>Testar Consulta de CPF</h5>
+                            </div>
+                            <div class="config-card-body">
+                                <form id="testeForm">
+                                    <div class="mb-4">
+                                        <label class="form-label">CPF para Consultar</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+                                            <input type="text" class="form-control" id="cpfTeste" 
+                                                   placeholder="000.000.000-00 ou 00000000000">
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-search me-2"></i>Consultar CPF
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="config-card h-100">
+                            <div class="config-card-header">
+                                <i class="bi bi-terminal-fill"></i>
+                                <h5>Resultado</h5>
+                            </div>
+                            <div class="config-card-body">
+                                <pre class="code-block" id="testeResultado" style="min-height: 200px;">// O resultado aparecerá aqui</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Logs Section -->
+            <section class="section" id="section-logs">
+                <div class="config-card">
+                    <div class="config-card-header d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-journal-text"></i>
+                            <h5 class="mb-0">Logs de Atividade</h5>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary" onclick="limparLogs()">
+                            <i class="bi bi-trash me-1"></i>Limpar
+                        </button>
+                    </div>
+                    <div class="config-card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover" id="logsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Data/Hora</th>
+                                        <th>Tipo</th>
+                                        <th>CPF</th>
+                                        <th>Status</th>
+                                        <th>Detalhes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-4">
+                                            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                            Nenhum log registrado ainda
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // ==================== NAVEGAÇÃO ====================
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const section = this.dataset.section;
+                if (section) showSection(section);
+            });
+        });
+
+        function showSection(sectionId) {
+            // Remove active de todos
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+            
+            // Ativa o selecionado
+            document.getElementById('section-' + sectionId).classList.add('active');
+            document.querySelector(`[data-section="${sectionId}"]`).classList.add('active');
+            
+            // Atualiza título
+            const titles = {
+                'dashboard': 'Dashboard',
+                'config-api': 'Chaves de API',
+                'template': 'Template da Mensagem',
+                'campos': 'Campos Exibidos',
+                'estilo': 'Estilo da Mensagem',
+                'javascript': 'Código JavaScript',
+                'webhook': 'Webhooks',
+                'teste': 'Testar Consulta',
+                'logs': 'Logs de Atividade'
+            };
+            document.getElementById('pageTitle').textContent = titles[sectionId] || 'Dashboard';
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('show');
+        }
+
+        // ==================== CONFIGURAÇÕES ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            carregarConfig();
+            atualizarPreview();
+            document.getElementById('apiUrl').value = window.location.origin;
+            document.getElementById('messageTemplate').addEventListener('input', atualizarPreview);
+        });
+
+        function carregarConfig() {
+            fetch('/api/config')
+                .then(r => r.json())
+                .then(data => {
+                    // Status das integrações
+                    if (data.crm_api_key && data.crm_api_key.length > 3) {
+                        document.getElementById('crmStatusBadge').className = 'status-badge online';
+                        document.getElementById('crmStatusBadge').textContent = 'Configurado';
+                    } else {
+                        document.getElementById('crmStatusBadge').className = 'status-badge warning';
+                        document.getElementById('crmStatusBadge').textContent = 'Não configurado';
+                    }
+                    
+                    if (data.cpf_api_token && data.cpf_api_token.length > 3) {
+                        document.getElementById('cpfStatusBadge').className = 'status-badge online';
+                        document.getElementById('cpfStatusBadge').textContent = 'Configurado';
+                    } else {
+                        document.getElementById('cpfStatusBadge').className = 'status-badge warning';
+                        document.getElementById('cpfStatusBadge').textContent = 'Não configurado';
+                    }
+                    
+                    if (data.message_template) {
+                        document.getElementById('messageTemplate').value = data.message_template;
+                        atualizarPreview();
+                    }
+                });
+        }
+
+        function togglePassword(id) {
+            const input = document.getElementById(id);
+            const icon = input.nextElementSibling.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'bi bi-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'bi bi-eye';
+            }
+        }
+
+        // ==================== TEMPLATE ====================
+        function insertVar(varName) {
+            const textarea = document.getElementById('messageTemplate');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const text = textarea.value;
+            textarea.value = text.substring(0, start) + varName + text.substring(end);
+            textarea.focus();
+            textarea.selectionStart = textarea.selectionEnd = start + varName.length;
+            atualizarPreview();
+        }
+
+        function atualizarPreview() {
+            const template = document.getElementById('messageTemplate').value;
+            const preview = template
+                .replace('{cpf_mascarado}', '123.***.**56-78')
+                .replace('{cpf}', '12345678978')
+                .replace('{nome}', 'JOÃO DA SILVA SANTOS')
+                .replace('{nascimento}', '01/01/1990')
+                .replace('{sexo}', 'Masculino')
+                .replace('{nome_mae}', 'MARIA DA SILVA');
+            document.getElementById('templatePreview').textContent = preview;
+        }
+
+        function resetTemplate() {
+            const defaultTemplate = `Olá! Encontrei os dados do CPF consultado:
+
+CPF: {cpf_mascarado}
+Nome: {nome}
+Nascimento: {nascimento}
+Sexo: {sexo}
+Mãe: {nome_mae}
+
+Caso precise de mais informações, estou à disposição.`;
+            document.getElementById('messageTemplate').value = defaultTemplate;
+            atualizarPreview();
+            showToast('Template restaurado!', 'success');
+        }
+
+        // ==================== FORMS ====================
+        document.getElementById('configForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const data = {
+                crm_api_key: document.getElementById('crmApiKey').value,
+                cpf_api_token: document.getElementById('cpfApiToken').value
+            };
+            
+            fetch('/api/config', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            })
+            .then(r => r.json())
+            .then(data => {
+                showToast('Configurações salvas com sucesso!', 'success');
+                carregarConfig();
+            });
+        });
+
+        document.getElementById('templateForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const data = {
+                message_template: document.getElementById('messageTemplate').value
+            };
+            
+            fetch('/api/config', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            })
+            .then(r => r.json())
+            .then(data => {
+                showToast('Template salvo com sucesso!', 'success');
+            });
+        });
+
+        // ==================== JAVASCRIPT ====================
+        function gerarJavascript() {
+            const apiUrl = document.getElementById('apiUrl').value || window.location.origin;
+            
+            fetch('/api/gerar-javascript', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({api_url: apiUrl})
+            })
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('javascriptCode').textContent = data.javascript;
+                showToast('Código gerado com sucesso!', 'success');
+            });
+        }
+
+        function copiarCodigo() {
+            const codigo = document.getElementById('javascriptCode').textContent;
+            navigator.clipboard.writeText(codigo).then(() => {
+                showToast('Código copiado para a área de transferência!', 'success');
+            });
+        }
+
+        // ==================== TESTE ====================
+        document.getElementById('testeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const cpf = document.getElementById('cpfTeste').value;
+            
+            document.getElementById('testeResultado').textContent = '// Consultando...';
+            
+            fetch('/api/consultar-cpf', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({cpf: cpf})
+            })
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('testeResultado').textContent = JSON.stringify(data, null, 2);
+                if (data.success) {
+                    showToast('CPF consultado com sucesso!', 'success');
+                } else {
+                    showToast('Erro na consulta: ' + (data.error || 'Desconhecido'), 'error');
+                }
+            })
+            .catch(err => {
+                document.getElementById('testeResultado').textContent = '// Erro: ' + err.message;
+                showToast('Erro na consulta', 'error');
+            });
+        });
+
+        // ==================== OUTROS ====================
+        function salvarCampos() {
+            showToast('Configurações de campos salvas!', 'success');
+        }
+
+        function salvarEstilo() {
+            showToast('Estilo da mensagem salvo!', 'success');
+        }
+
+        function limparLogs() {
+            showToast('Logs limpos!', 'success');
+        }
+
+        // ==================== TOAST ====================
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'custom-toast';
+            
+            const icons = {
+                success: 'bi-check-circle-fill text-success',
+                error: 'bi-x-circle-fill text-danger',
+                info: 'bi-info-circle-fill text-primary',
+                warning: 'bi-exclamation-triangle-fill text-warning'
+            };
+            
+            toast.innerHTML = `
+                <i class="bi ${icons[type]} fs-5"></i>
+                <span>${message}</span>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s ease reverse';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
