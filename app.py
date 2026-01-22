@@ -53,14 +53,16 @@ config = {
 # Logs em memória
 logs = []
 
-def add_log(tipo, cpf, status, detalhes=''):
+def add_log(tipo, cpf, status, detalhes='', lead_phone='', lead_name=''):
     """Adiciona um log de atividade."""
     logs.insert(0, {
         'data': datetime.now().strftime('%d/%m/%Y %H:%M:%S'),
         'tipo': tipo,
-        'cpf': cpf[:3] + '***' + cpf[-2:] if cpf else '-',
+        'cpf': cpf[:3] + '***' + cpf[-2:] if cpf and len(cpf) >= 5 else '-',
         'status': status,
-        'detalhes': detalhes
+        'detalhes': detalhes,
+        'lead_phone': lead_phone or '-',
+        'lead_name': lead_name or '-'
     })
     # Mantém apenas os últimos 100 logs
     if len(logs) > 100:
@@ -360,11 +362,12 @@ def webhook_datacrazy():
         data = request.get_json(force=True) if request.data else {}
         
         conversation_id = data.get('conversationId')
-        lead_phone = data.get('leadPhone')
+        lead_phone = data.get('leadPhone', '')
+        lead_name = data.get('leadName', '')
         mensagem_direta = data.get('mensagem')
         
         if not conversation_id:
-            add_log('WEBHOOK', '-', 'Erro', 'conversationId não fornecido')
+            add_log('WEBHOOK', '-', 'Erro', 'conversationId não fornecido', lead_phone, lead_name)
             return jsonify({
                 "success": False,
                 "error": "conversationId é obrigatório"
@@ -398,14 +401,14 @@ def webhook_datacrazy():
                             break
         
         if not cpf:
-            add_log('CONSULTA', '-', 'Erro', 'CPF não encontrado nas mensagens')
+            add_log('CONSULTA', '-', 'Erro', 'CPF não encontrado nas mensagens', lead_phone, lead_name)
             return jsonify({
                 "success": False,
                 "error": "CPF não encontrado nas mensagens"
             }), 404
         
         if not validar_cpf(cpf):
-            add_log('CONSULTA', cpf, 'Erro', 'CPF inválido')
+            add_log('CONSULTA', cpf, 'Erro', 'CPF inválido', lead_phone, lead_name)
             return jsonify({
                 "success": False,
                 "error": "CPF inválido",
@@ -421,10 +424,13 @@ def webhook_datacrazy():
         # Envia a mensagem
         resultado_envio = enviar_mensagem_conversa(conversation_id, mensagem_resposta)
         
+        # Pega o nome do titular do CPF consultado
+        nome_titular = dados_cpf.get('NOME', dados_cpf.get('nome', '')) if dados_cpf else ''
+        
         if resultado_envio:
-            add_log('CONSULTA', cpf, 'Sucesso', f'Mensagem enviada para {conversation_id}')
+            add_log('CONSULTA', cpf, 'Sucesso', f'Titular: {nome_titular}', lead_phone, lead_name)
         else:
-            add_log('CONSULTA', cpf, 'Parcial', 'CPF consultado mas mensagem não enviada')
+            add_log('CONSULTA', cpf, 'Parcial', f'Titular: {nome_titular} (msg não enviada)', lead_phone, lead_name)
         
         return jsonify({
             "success": True,
@@ -438,7 +444,7 @@ def webhook_datacrazy():
         })
         
     except Exception as e:
-        add_log('WEBHOOK', '-', 'Erro', str(e))
+        add_log('WEBHOOK', '-', 'Erro', str(e), '', '')
         print(f"Erro no webhook: {e}")
         return jsonify({
             "success": False,
