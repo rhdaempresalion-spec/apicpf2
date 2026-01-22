@@ -1,18 +1,20 @@
 [phases.setup]
-nixPkgs = ["python311"]
+nixPkgs = ["python311", "python311Packages.pip", "python311Packages.setuptools"]
 
 [phases.install]
+dependsOn = ["setup"]
 cmds = [
-    "python3.11 -m venv /opt/venv",
-    ". /opt/venv/bin/activate && pip install --upgrade pip",
-    ". /opt/venv/bin/activate && pip install -r requirements.txt"
+    "python3 -m venv --copies /opt/venv",
+    "/opt/venv/bin/pip install --upgrade pip setuptools wheel",
+    "/opt/venv/bin/pip install -r requirements.txt"
 ]
 
 [phases.build]
-cmds = []
+dependsOn = ["install"]
 
 [start]
-cmd = "/opt/venv/bin/gunicorn app:app --bind 0.0.0.0:$PORT"
+cmd = "/opt/venv/bin/gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --threads 4"
 
 [variables]
 PYTHONUNBUFFERED = "1"
+PIP_DISABLE_PIP_VERSION_CHECK = "1"
