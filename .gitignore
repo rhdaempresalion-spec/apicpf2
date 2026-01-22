@@ -8,7 +8,3 @@ venv/
 .env
 *.log
 .DS_Store
-
-# Ignorar arquivos de dados (logs e contas são persistidos localmente)
-# Mas manter a pasta data para que seja criada no deploy
-data/*.json

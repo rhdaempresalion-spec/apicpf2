@@ -25,8 +25,9 @@ CORS(app)
 
 # ==================== CONFIGURAÇÕES ====================
 
-# Diretório para dados persistentes (Railway usa /app por padrão)
-DATA_DIR = os.environ.get('DATA_DIR', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data'))
+# Diretório para dados persistentes
+# Use DATA_DIR env var para configurar, ou /app/storage para volume do Railway
+DATA_DIR = os.environ.get('DATA_DIR', '/app/storage')
 os.makedirs(DATA_DIR, exist_ok=True)
 
 CRM_API_BASE = "https://api.g1.datacrazy.io"
