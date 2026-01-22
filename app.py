@@ -95,7 +95,7 @@ def add_log(tipo, cpf, status, detalhes='', lead_phone='', lead_name=''):
         logs.insert(0, {
             'data': datetime.now().strftime('%d/%m/%Y %H:%M:%S'),
             'tipo': tipo,
-            'cpf': cpf[:3] + '***' + cpf[-2:] if cpf and len(cpf) >= 5 else '-',
+            'cpf': cpf if cpf else '-',
             'status': status,
             'detalhes': detalhes,
             'lead_phone': lead_phone or '-',
