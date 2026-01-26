@@ -296,13 +296,21 @@ def formatar_mensagem(dados_cpf, cpf, account):
     if not dados_cpf:
         return msg_erro
     
+    # Obtém o nome e converte para MAIÚSCULAS
+    nome_original = dados_cpf.get('NOME', dados_cpf.get('nome', 'Não disponível'))
+    nome_maiusculo = nome_original.upper() if nome_original else 'NÃO DISPONÍVEL'
+    
+    # Obtém o nome da mãe e converte para MAIÚSCULAS
+    nome_mae_original = dados_cpf.get('NOME_MAE', dados_cpf.get('nome_mae', ''))
+    nome_mae_maiusculo = nome_mae_original.upper() if nome_mae_original else ''
+    
     dados = {
         'cpf': f"{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}",
         'cpf_mascarado': formatar_cpf(cpf, formato),
-        'nome': dados_cpf.get('NOME', dados_cpf.get('nome', 'Não disponível')),
+        'nome': nome_maiusculo,
         'nascimento': dados_cpf.get('NASC', dados_cpf.get('nascimento', '')),
         'sexo': dados_cpf.get('SEXO', dados_cpf.get('sexo', '')),
-        'nome_mae': dados_cpf.get('NOME_MAE', dados_cpf.get('nome_mae', ''))
+        'nome_mae': nome_mae_maiusculo
     }
     
     try:
