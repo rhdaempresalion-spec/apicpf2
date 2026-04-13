@@ -56,7 +56,6 @@
 
         .sidebar-logo span { font-size: 1.2rem; font-weight: 700; }
 
-        /* Account Selector */
         .account-selector {
             padding: 15px 20px;
             border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -75,19 +74,9 @@
             justify-content: space-between;
         }
 
-        .account-dropdown:hover {
-            background: rgba(255,255,255,0.15);
-        }
-
-        .account-dropdown .account-name {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .account-dropdown .account-name i {
-            color: var(--success);
-        }
+        .account-dropdown:hover { background: rgba(255,255,255,0.15); }
+        .account-dropdown .account-name { display: flex; align-items: center; gap: 10px; }
+        .account-dropdown .account-name i { color: var(--success); }
 
         .account-list {
             position: absolute;
@@ -116,16 +105,8 @@
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
 
-        .account-item:hover {
-            background: rgba(255,255,255,0.1);
-            color: white;
-        }
-
-        .account-item.active {
-            background: rgba(99, 102, 241, 0.3);
-            color: white;
-        }
-
+        .account-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .account-item.active { background: rgba(99, 102, 241, 0.3); color: white; }
         .account-item i { color: var(--success); }
 
         .add-account-btn {
@@ -137,9 +118,7 @@
             gap: 10px;
         }
 
-        .add-account-btn:hover {
-            background: rgba(255,255,255,0.1);
-        }
+        .add-account-btn:hover { background: rgba(255,255,255,0.1); }
 
         .sidebar-menu { padding: 15px 0; }
 
@@ -248,14 +227,8 @@
             border-bottom: 1px solid #e2e8f0;
         }
 
-        .config-card-header h5 {
-            font-weight: 600;
-            color: var(--dark);
-            margin: 0;
-        }
-
+        .config-card-header h5 { font-weight: 600; color: var(--dark); margin: 0; }
         .config-card-body { padding: 25px; }
-
         .form-label { font-weight: 500; color: #475569; margin-bottom: 8px; }
 
         .form-control, .form-select {
@@ -346,8 +319,7 @@
             background: white;
             padding: 15px 20px;
             border-radius: 10px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            margin-bottom: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             display: flex;
             align-items: center;
             gap: 10px;
@@ -359,13 +331,11 @@
             to { transform: translateX(0); opacity: 1; }
         }
 
-        /* Modal */
         .modal-content { border-radius: 16px; border: none; }
         .modal-header { border-bottom: 1px solid #e2e8f0; padding: 20px 25px; }
         .modal-body { padding: 25px; }
         .modal-footer { border-top: 1px solid #e2e8f0; padding: 15px 25px; }
 
-        /* Preview */
         .message-preview {
             background: #dcf8c6;
             padding: 15px;
@@ -375,7 +345,6 @@
             white-space: pre-wrap;
         }
 
-        /* Variables */
         .variable-btn {
             background: #e0e7ff;
             color: var(--primary);
@@ -388,6 +357,109 @@
         }
 
         .variable-btn:hover { background: #c7d2fe; }
+
+        /* Pagination styles */
+        .pagination-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .pagination-info {
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+
+        .pagination-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .pagination-buttons button {
+            padding: 6px 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: #475569;
+        }
+
+        .pagination-buttons button:hover:not(:disabled) {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .pagination-buttons button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-buttons button.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Filter bar */
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        .filter-bar .form-control,
+        .filter-bar .form-select {
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            border-radius: 8px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .filter-group label {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .export-btn {
+            background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+        }
+
+        .export-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .logs-counter {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -400,7 +472,6 @@
             </a>
         </div>
 
-        <!-- Account Selector -->
         <div class="account-selector">
             <div class="position-relative">
                 <div class="account-dropdown" onclick="toggleAccountList()">
@@ -451,7 +522,7 @@
             <a class="menu-item" onclick="showSection('logs')">
                 <i class="bi bi-journal-text"></i>
                 <span>Logs</span>
-                <span class="badge bg-success ms-auto">Novo</span>
+                <span class="badge bg-success ms-auto">Completo</span>
             </a>
 
             <div class="menu-category">Global</div>
@@ -606,7 +677,9 @@
                     <hr class="my-4">
 
                     <label class="form-label">Pré-visualização</label>
-                    <div class="message-preview" id="messagePreview"></div>
+                    <div class="message-preview" id="messagePreview">
+                        Selecione uma conta para ver a pré-visualização
+                    </div>
                 </div>
             </div>
         </section>
@@ -615,7 +688,7 @@
         <section class="section" id="section-javascript">
             <div class="config-card">
                 <div class="config-card-header">
-                    <h5><i class="bi bi-code-slash me-2"></i>Código JavaScript para o CRM</h5>
+                    <h5><i class="bi bi-code-slash me-2"></i>Código JavaScript para CRM</h5>
                 </div>
                 <div class="config-card-body">
                     <p class="text-muted mb-3">Copie este código e cole na automação do CRM DataCrazy (Ação: Executar JavaScript)</p>
@@ -660,16 +733,69 @@
             </div>
         </section>
 
-        <!-- Logs Section -->
+        <!-- Logs Section (COMPLETAMENTE REFEITO) -->
         <section class="section" id="section-logs">
             <div class="config-card">
                 <div class="config-card-header d-flex justify-content-between align-items-center">
-                    <h5><i class="bi bi-journal-text me-2"></i>Logs de Atividade</h5>
-                    <button class="btn btn-outline-danger btn-sm" onclick="limparLogs()">
-                        <i class="bi bi-trash me-1"></i>Limpar
-                    </button>
+                    <div class="d-flex align-items-center gap-3">
+                        <h5 class="mb-0"><i class="bi bi-journal-text me-2"></i>Logs de Atividade</h5>
+                        <span class="logs-counter" id="logsCounter">0 registros</span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="export-btn" onclick="exportarCSV()">
+                            <i class="bi bi-download"></i>Exportar CSV
+                        </button>
+                        <button class="export-btn" onclick="exportarTodasContas()" style="background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);">
+                            <i class="bi bi-download"></i>Exportar Todas Contas
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" onclick="limparLogs()">
+                            <i class="bi bi-trash me-1"></i>Limpar
+                        </button>
+                    </div>
                 </div>
                 <div class="config-card-body">
+                    <!-- Filtros -->
+                    <div class="filter-bar">
+                        <div class="filter-group">
+                            <label>Buscar</label>
+                            <input type="text" class="form-control" id="logSearch" placeholder="CPF, nome, telefone..." style="min-width: 200px;" oninput="debounceSearch()">
+                        </div>
+                        <div class="filter-group">
+                            <label>Status</label>
+                            <select class="form-select" id="logStatusFilter" onchange="carregarLogs(1)" style="min-width: 140px;">
+                                <option value="">Todos</option>
+                                <option value="Sucesso">Sucesso</option>
+                                <option value="Erro">Erro</option>
+                                <option value="Parcial">Parcial</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Data Início</label>
+                            <input type="date" class="form-control" id="logDateFrom" onchange="carregarLogs(1)">
+                        </div>
+                        <div class="filter-group">
+                            <label>Data Fim</label>
+                            <input type="date" class="form-control" id="logDateTo" onchange="carregarLogs(1)">
+                        </div>
+                        <div class="filter-group">
+                            <label>Por Página</label>
+                            <select class="form-select" id="logPerPage" onchange="carregarLogs(1)" style="min-width: 100px;">
+                                <option value="25">25</option>
+                                <option value="50" selected>50</option>
+                                <option value="100">100</option>
+                                <option value="200">200</option>
+                                <option value="500">500</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-sm btn-outline-primary" onclick="limparFiltros()" style="padding: 8px 12px; border-radius: 8px;">
+                                <i class="bi bi-x-circle me-1"></i>Limpar Filtros
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tabela -->
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead>
@@ -692,6 +818,12 @@
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+
+                    <!-- Paginação -->
+                    <div class="pagination-controls" id="paginationControls" style="display: none;">
+                        <div class="pagination-info" id="paginationInfo"></div>
+                        <div class="pagination-buttons" id="paginationButtons"></div>
                     </div>
                 </div>
             </div>
@@ -753,6 +885,8 @@
     <script>
         let currentAccountId = null;
         let accounts = [];
+        let currentPage = 1;
+        let searchTimeout = null;
 
         // ==================== INICIALIZAÇÃO ====================
         document.addEventListener('DOMContentLoaded', function() {
@@ -767,7 +901,6 @@
                 .then(data => {
                     accounts = data.accounts || [];
                     renderizarListaContas();
-                    
                     if (accounts.length > 0 && !currentAccountId) {
                         selecionarConta(accounts[0].id);
                     }
@@ -776,12 +909,10 @@
 
         function renderizarListaContas() {
             const container = document.getElementById('accountListItems');
-            
             if (accounts.length === 0) {
                 container.innerHTML = '<div class="text-center text-muted py-3">Nenhuma conta cadastrada</div>';
                 return;
             }
-            
             container.innerHTML = accounts.map(acc => `
                 <div class="account-item ${acc.id === currentAccountId ? 'active' : ''}" onclick="selecionarConta('${acc.id}')">
                     <i class="bi bi-whatsapp"></i>
@@ -797,22 +928,18 @@
         function selecionarConta(accountId) {
             currentAccountId = accountId;
             const acc = accounts.find(a => a.id === accountId);
-            
             if (acc) {
                 document.getElementById('currentAccountName').textContent = acc.name;
             }
-            
             document.getElementById('accountList').classList.remove('show');
             renderizarListaContas();
-            
             carregarDadosConta();
-            carregarLogs();
+            carregarLogs(1);
             carregarStats();
         }
 
         function carregarDadosConta() {
             if (!currentAccountId) return;
-            
             fetch(`/api/accounts/${currentAccountId}`)
                 .then(r => r.json())
                 .then(data => {
@@ -839,12 +966,10 @@
         function criarConta() {
             const name = document.getElementById('newAccountName').value;
             const apiKey = document.getElementById('newAccountApiKey').value;
-            
             if (!name || !apiKey) {
                 showToast('Preencha todos os campos', 'error');
                 return;
             }
-            
             fetch('/api/accounts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -868,15 +993,9 @@
                 showToast('Selecione uma conta primeiro', 'error');
                 return;
             }
-            
-            const data = {
-                name: document.getElementById('accountName').value
-            };
-            
+            const data = { name: document.getElementById('accountName').value };
             const apiKey = document.getElementById('crmApiKey').value;
-            if (apiKey) {
-                data.crm_api_key = apiKey;
-            }
+            if (apiKey) data.crm_api_key = apiKey;
             
             fetch(`/api/accounts/${currentAccountId}`, {
                 method: 'PUT',
@@ -894,11 +1013,7 @@
 
         function excluirConta() {
             if (!currentAccountId) return;
-            
-            if (!confirm('Tem certeza que deseja excluir esta conta? Os logs também serão removidos.')) {
-                return;
-            }
-            
+            if (!confirm('Tem certeza que deseja excluir esta conta? Os logs também serão removidos.')) return;
             fetch(`/api/accounts/${currentAccountId}`, { method: 'DELETE' })
                 .then(r => r.json())
                 .then(data => {
@@ -916,7 +1031,6 @@
                 showToast('Selecione uma conta primeiro', 'error');
                 return;
             }
-            
             fetch(`/api/accounts/${currentAccountId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
@@ -928,9 +1042,7 @@
             })
             .then(r => r.json())
             .then(data => {
-                if (data.success) {
-                    showToast('Template salvo!', 'success');
-                }
+                if (data.success) showToast('Template salvo!', 'success');
             });
         }
 
@@ -963,7 +1075,6 @@
                 showToast('Selecione uma conta primeiro', 'error');
                 return;
             }
-            
             fetch(`/api/accounts/${currentAccountId}/javascript`)
                 .then(r => r.json())
                 .then(data => {
@@ -983,14 +1094,11 @@
         // ==================== TESTAR ====================
         function testarCpf() {
             const cpf = document.getElementById('cpfTeste').value;
-            
             if (!cpf) {
                 showToast('Digite um CPF', 'error');
                 return;
             }
-            
             document.getElementById('resultadoTeste').textContent = 'Consultando...';
-            
             fetch('/api/consultar-cpf', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1008,14 +1116,35 @@
             });
         }
 
-        // ==================== LOGS ====================
-        function carregarLogs() {
-            if (!currentAccountId) return;
+        // ==================== LOGS (COMPLETAMENTE REFEITO) ====================
+        function getFilterParams() {
+            const search = document.getElementById('logSearch').value.trim();
+            const status = document.getElementById('logStatusFilter').value;
+            const dateFrom = document.getElementById('logDateFrom').value;
+            const dateTo = document.getElementById('logDateTo').value;
+            const perPage = document.getElementById('logPerPage').value;
             
-            fetch(`/api/accounts/${currentAccountId}/logs`)
+            let params = `per_page=${perPage}`;
+            if (search) params += `&search=${encodeURIComponent(search)}`;
+            if (status) params += `&status=${encodeURIComponent(status)}`;
+            if (dateFrom) params += `&date_from=${dateFrom}`;
+            if (dateTo) params += `&date_to=${dateTo}`;
+            return params;
+        }
+
+        function carregarLogs(page) {
+            if (!currentAccountId) return;
+            if (page) currentPage = page;
+            
+            const params = getFilterParams();
+            
+            fetch(`/api/accounts/${currentAccountId}/logs?page=${currentPage}&${params}`)
                 .then(r => r.json())
                 .then(data => {
                     const tbody = document.getElementById('logsTableBody');
+                    const counter = document.getElementById('logsCounter');
+                    
+                    counter.textContent = `${data.total || 0} registros`;
                     
                     if (data.logs && data.logs.length > 0) {
                         tbody.innerHTML = data.logs.map(log => `
@@ -1029,27 +1158,109 @@
                                 <td><small class="text-muted">${log.detalhes}</small></td>
                             </tr>
                         `).join('');
+                        
+                        // Paginação
+                        renderizarPaginacao(data);
                     } else {
                         tbody.innerHTML = `
                             <tr>
                                 <td colspan="7" class="text-center text-muted py-4">
                                     <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                                    Nenhum log registrado ainda
+                                    Nenhum log encontrado
                                 </td>
                             </tr>
                         `;
+                        document.getElementById('paginationControls').style.display = 'none';
                     }
                 });
         }
 
+        function renderizarPaginacao(data) {
+            const controls = document.getElementById('paginationControls');
+            const info = document.getElementById('paginationInfo');
+            const buttons = document.getElementById('paginationButtons');
+            
+            if (data.total_pages <= 1) {
+                controls.style.display = 'flex';
+                info.textContent = `Mostrando ${data.total} de ${data.total} registros`;
+                buttons.innerHTML = '';
+                return;
+            }
+            
+            controls.style.display = 'flex';
+            
+            const start = (data.page - 1) * data.per_page + 1;
+            const end = Math.min(data.page * data.per_page, data.total);
+            info.textContent = `Mostrando ${start}-${end} de ${data.total} registros (Página ${data.page} de ${data.total_pages})`;
+            
+            let html = '';
+            
+            // Botão Anterior
+            html += `<button onclick="carregarLogs(1)" ${data.page === 1 ? 'disabled' : ''}><i class="bi bi-chevron-double-left"></i></button>`;
+            html += `<button onclick="carregarLogs(${data.page - 1})" ${!data.has_prev ? 'disabled' : ''}><i class="bi bi-chevron-left"></i></button>`;
+            
+            // Páginas
+            let startPage = Math.max(1, data.page - 2);
+            let endPage = Math.min(data.total_pages, data.page + 2);
+            
+            if (startPage > 1) {
+                html += `<button onclick="carregarLogs(1)">1</button>`;
+                if (startPage > 2) html += `<button disabled>...</button>`;
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<button onclick="carregarLogs(${i})" class="${i === data.page ? 'active' : ''}">${i}</button>`;
+            }
+            
+            if (endPage < data.total_pages) {
+                if (endPage < data.total_pages - 1) html += `<button disabled>...</button>`;
+                html += `<button onclick="carregarLogs(${data.total_pages})">${data.total_pages}</button>`;
+            }
+            
+            // Botão Próximo
+            html += `<button onclick="carregarLogs(${data.page + 1})" ${!data.has_next ? 'disabled' : ''}><i class="bi bi-chevron-right"></i></button>`;
+            html += `<button onclick="carregarLogs(${data.total_pages})" ${data.page === data.total_pages ? 'disabled' : ''}><i class="bi bi-chevron-double-right"></i></button>`;
+            
+            buttons.innerHTML = html;
+        }
+
+        function debounceSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => carregarLogs(1), 400);
+        }
+
+        function limparFiltros() {
+            document.getElementById('logSearch').value = '';
+            document.getElementById('logStatusFilter').value = '';
+            document.getElementById('logDateFrom').value = '';
+            document.getElementById('logDateTo').value = '';
+            document.getElementById('logPerPage').value = '50';
+            carregarLogs(1);
+        }
+
+        function exportarCSV() {
+            if (!currentAccountId) {
+                showToast('Selecione uma conta primeiro', 'error');
+                return;
+            }
+            const params = getFilterParams();
+            window.open(`/api/accounts/${currentAccountId}/logs/export?${params}`, '_blank');
+            showToast('Exportando CSV com todos os logs...', 'success');
+        }
+
+        function exportarTodasContas() {
+            window.open('/api/logs/export-all', '_blank');
+            showToast('Exportando CSV de todas as contas...', 'success');
+        }
+
         function limparLogs() {
             if (!currentAccountId) return;
-            
+            if (!confirm('Tem certeza que deseja limpar TODOS os logs desta conta? Esta ação não pode ser desfeita.')) return;
             fetch(`/api/accounts/${currentAccountId}/logs`, { method: 'DELETE' })
                 .then(r => r.json())
                 .then(data => {
                     showToast('Logs limpos!', 'success');
-                    carregarLogs();
+                    carregarLogs(1);
                 });
         }
 
@@ -1065,7 +1276,6 @@
         // ==================== STATS ====================
         function carregarStats() {
             if (!currentAccountId) return;
-            
             fetch(`/api/accounts/${currentAccountId}/stats`)
                 .then(r => r.json())
                 .then(data => {
@@ -1086,12 +1296,10 @@
 
         function salvarConfigGlobal() {
             const token = document.getElementById('cpfApiToken').value;
-            
             if (!token) {
                 showToast('Digite o token', 'error');
                 return;
             }
-            
             fetch('/api/config', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1126,7 +1334,7 @@
             };
             document.getElementById('pageTitle').textContent = titles[section] || 'Dashboard';
             
-            if (section === 'logs') carregarLogs();
+            if (section === 'logs') carregarLogs(1);
             if (section === 'dashboard') carregarStats();
         }
 
@@ -1135,16 +1343,13 @@
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
             toast.className = 'custom-toast';
-            
             const icons = {
                 'success': '<i class="bi bi-check-circle text-success"></i>',
                 'error': '<i class="bi bi-x-circle text-danger"></i>',
                 'info': '<i class="bi bi-info-circle text-primary"></i>'
             };
-            
             toast.innerHTML = `${icons[type] || icons.info}<span>${message}</span>`;
             container.appendChild(toast);
-            
             setTimeout(() => toast.remove(), 3000);
         }
 
