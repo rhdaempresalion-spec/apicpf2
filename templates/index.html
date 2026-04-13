@@ -742,11 +742,8 @@
                         <span class="logs-counter" id="logsCounter">0 registros</span>
                     </div>
                     <div class="d-flex gap-2">
-                        <button class="export-btn" onclick="exportarCSV()">
-                            <i class="bi bi-download"></i>Exportar CSV
-                        </button>
-                        <button class="export-btn" onclick="exportarTodasContas()" style="background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);">
-                            <i class="bi bi-download"></i>Exportar Todas Contas
+                        <button class="export-btn" onclick="exportarTXT()">
+                            <i class="bi bi-download"></i>Exportar TXT
                         </button>
                         <button class="btn btn-outline-danger btn-sm" onclick="limparLogs()">
                             <i class="bi bi-trash me-1"></i>Limpar
@@ -1238,19 +1235,14 @@
             carregarLogs(1);
         }
 
-        function exportarCSV() {
+        function exportarTXT() {
             if (!currentAccountId) {
                 showToast('Selecione uma conta primeiro', 'error');
                 return;
             }
             const params = getFilterParams();
             window.open(`/api/accounts/${currentAccountId}/logs/export?${params}`, '_blank');
-            showToast('Exportando CSV com todos os logs...', 'success');
-        }
-
-        function exportarTodasContas() {
-            window.open('/api/logs/export-all', '_blank');
-            showToast('Exportando CSV de todas as contas...', 'success');
+            showToast('Exportando TXT com todos os logs desta conta...', 'success');
         }
 
         function limparLogs() {
