@@ -24,7 +24,6 @@ from urllib3.util.retry import Retry
 import re
 import os
 import json
-import csv
 import io
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
@@ -451,11 +450,11 @@ def api_account_logs(account_id):
     })
 
 
-# ==================== EXPORTAÇÃO CSV (NOVO) ====================
+# ==================== EXPORTAÇÃO TXT (NOVO) ====================
 
 @app.route('/api/accounts/<account_id>/logs/export', methods=['GET'])
 def export_account_logs(account_id):
-    """Exporta TODOS os logs de uma conta em CSV."""
+    """Exporta TODOS os logs de uma conta em TXT."""
     logs_data = load_logs()
     account_logs = logs_data.get(account_id, [])
     
@@ -492,71 +491,43 @@ def export_account_logs(account_id):
         except:
             pass
     
-    output = io.StringIO()
-    writer = csv.writer(output, delimiter=';')
-    writer.writerow(['Data/Hora', 'Conta', 'Lead', 'Telefone', 'CPF', 'Tipo', 'Status', 'Detalhes'])
-    
-    for log in filtered_logs:
-        writer.writerow([
-            log.get('data', ''),
-            log.get('account_name', '-'),
-            log.get('lead_name', '-'),
-            log.get('lead_phone', '-'),
-            log.get('cpf', '-'),
-            log.get('tipo', '-'),
-            log.get('status', '-'),
-            log.get('detalhes', '-')
-        ])
-    
+    # Gera TXT formatado
     acc = get_account(account_id)
     account_name = acc.get('name', 'conta') if acc else 'conta'
+    
+    lines = []
+    lines.append('=' * 60)
+    lines.append(f'  LOGS DE CONSULTAS - {account_name.upper()}')
+    lines.append(f'  Exportado em: {datetime.now().strftime("%d/%m/%Y %H:%M:%S")}')
+    lines.append(f'  Total de registros: {len(filtered_logs)}')
+    lines.append('=' * 60)
+    lines.append('')
+    
+    for i, log in enumerate(filtered_logs, 1):
+        lines.append(f'--- Consulta #{i} ---')
+        lines.append(f'Data/Hora:  {log.get("data", "-")}')
+        lines.append(f'Lead:       {log.get("lead_name", "-")}')
+        lines.append(f'Telefone:   {log.get("lead_phone", "-")}')
+        lines.append(f'CPF:        {log.get("cpf", "-")}')
+        lines.append(f'Status:     {log.get("status", "-")}')
+        lines.append(f'Detalhes:   {log.get("detalhes", "-")}')
+        lines.append('')
+    
+    lines.append('=' * 60)
+    lines.append(f'  FIM - {len(filtered_logs)} registros exportados')
+    lines.append('=' * 60)
+    
+    output = '\n'.join(lines)
+    
     safe_name = re.sub(r'[^\w\-]', '_', account_name)
-    filename = f"logs_{safe_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    filename = f"logs_{safe_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
     
     return Response(
-        output.getvalue(),
-        mimetype='text/csv',
+        output,
+        mimetype='text/plain',
         headers={
             'Content-Disposition': f'attachment; filename={filename}',
-            'Content-Type': 'text/csv; charset=utf-8'
-        }
-    )
-
-
-# ==================== EXPORTAÇÃO DE TODAS AS CONTAS (NOVO) ====================
-
-@app.route('/api/logs/export-all', methods=['GET'])
-def export_all_logs():
-    """Exporta logs de TODAS as contas em um único CSV."""
-    logs_data = load_logs()
-    accounts = load_accounts()
-    
-    output = io.StringIO()
-    writer = csv.writer(output, delimiter=';')
-    writer.writerow(['Conta', 'Data/Hora', 'Lead', 'Telefone', 'CPF', 'Tipo', 'Status', 'Detalhes'])
-    
-    for acc_id, acc_logs in logs_data.items():
-        acc_name = accounts.get(acc_id, {}).get('name', acc_id)
-        for log in acc_logs:
-            writer.writerow([
-                acc_name,
-                log.get('data', ''),
-                log.get('lead_name', '-'),
-                log.get('lead_phone', '-'),
-                log.get('cpf', '-'),
-                log.get('tipo', '-'),
-                log.get('status', '-'),
-                log.get('detalhes', '-')
-            ])
-    
-    filename = f"logs_todas_contas_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
-    
-    return Response(
-        output.getvalue(),
-        mimetype='text/csv',
-        headers={
-            'Content-Disposition': f'attachment; filename={filename}',
-            'Content-Type': 'text/csv; charset=utf-8'
+            'Content-Type': 'text/plain; charset=utf-8'
         }
     )
 

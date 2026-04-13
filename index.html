@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPF API - Painel Multi-Conta</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1e1b4b;
+            --light: #f8fafc;
+            --sidebar-width: 280px;
+        }
+
+        * { font-family: 'Inter', sans-serif; }
+        body { background: #f1f5f9; min-height: 100vh; }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, var(--dark) 0%, #312e81 100%);
+            padding: 0;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: white;
+            text-decoration: none;
+        }
+
+        .sidebar-logo i {
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .sidebar-logo span { font-size: 1.2rem; font-weight: 700; }
+
+        .account-selector {
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .account-dropdown {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            padding: 10px 15px;
+            color: white;
+            width: 100%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .account-dropdown:hover { background: rgba(255,255,255,0.15); }
+        .account-dropdown .account-name { display: flex; align-items: center; gap: 10px; }
+        .account-dropdown .account-name i { color: var(--success); }
+
+        .account-list {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #1e1b4b;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 10px;
+            margin-top: 5px;
+            display: none;
+            z-index: 100;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .account-list.show { display: block; }
+
+        .account-item {
+            padding: 12px 15px;
+            color: rgba(255,255,255,0.8);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .account-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .account-item.active { background: rgba(99, 102, 241, 0.3); color: white; }
+        .account-item i { color: var(--success); }
+
+        .add-account-btn {
+            padding: 12px 15px;
+            color: var(--primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .add-account-btn:hover { background: rgba(255,255,255,0.1); }
+
+        .sidebar-menu { padding: 15px 0; }
+
+        .menu-category {
+            color: rgba(255,255,255,0.4);
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 15px 25px 10px;
+        }
+
+        .menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 25px;
+            color: rgba(255,255,255,0.7);
+            text-decoration: none;
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+            cursor: pointer;
+        }
+
+        .menu-item:hover, .menu-item.active {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border-left-color: var(--primary);
+        }
+
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 30px;
+            min-height: 100vh;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .page-title { font-size: 1.5rem; font-weight: 600; color: var(--dark); }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: white;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .stat-icon.purple { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); color: white; }
+        .stat-icon.green { background: linear-gradient(135deg, #10b981 0%, #34d399 100%); color: white; }
+        .stat-icon.blue { background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%); color: white; }
+
+        .stat-value { font-size: 2rem; font-weight: 700; color: var(--dark); }
+        .stat-label { color: #64748b; font-size: 0.85rem; }
+
+        .config-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+
+        .config-card-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .config-card-header h5 { font-weight: 600; color: var(--dark); margin: 0; }
+        .config-card-body { padding: 25px; }
+        .form-label { font-weight: 500; color: #475569; margin-bottom: 8px; }
+
+        .form-control, .form-select {
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 12px 15px;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-outline-primary {
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            border-radius: 10px;
+            padding: 10px 20px;
+        }
+
+        .btn-outline-danger {
+            border: 2px solid var(--danger);
+            color: var(--danger);
+            border-radius: 10px;
+            padding: 10px 20px;
+        }
+
+        .section { display: none; }
+        .section.active { display: block; }
+
+        .table { margin-bottom: 0; }
+        .table th { 
+            background: #f8fafc; 
+            font-weight: 600; 
+            color: #475569;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .badge { padding: 6px 12px; border-radius: 6px; font-weight: 500; }
+
+        .code-block {
+            background: #1e1b4b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 12px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .copy-btn:hover { background: rgba(255,255,255,0.2); }
+
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        .custom-toast {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .modal-content { border-radius: 16px; border: none; }
+        .modal-header { border-bottom: 1px solid #e2e8f0; padding: 20px 25px; }
+        .modal-body { padding: 25px; }
+        .modal-footer { border-top: 1px solid #e2e8f0; padding: 15px 25px; }
+
+        .message-preview {
+            background: #dcf8c6;
+            padding: 15px;
+            border-radius: 10px;
+            max-width: 400px;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+        }
+
+        .variable-btn {
+            background: #e0e7ff;
+            color: var(--primary);
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            margin: 2px;
+        }
+
+        .variable-btn:hover { background: #c7d2fe; }
+
+        /* Pagination styles */
+        .pagination-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .pagination-info {
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+
+        .pagination-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .pagination-buttons button {
+            padding: 6px 12px;
+            border: 1px solid #e2e8f0;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: #475569;
+        }
+
+        .pagination-buttons button:hover:not(:disabled) {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .pagination-buttons button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-buttons button.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Filter bar */
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            align-items: end;
+        }
+
+        .filter-bar .form-control,
+        .filter-bar .form-select {
+            padding: 8px 12px;
+            font-size: 0.85rem;
+            border-radius: 8px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .filter-group label {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .export-btn {
+            background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 500;
+        }
+
+        .export-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .logs-counter {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <a href="#" class="sidebar-logo">
+                <i class="bi bi-cpu"></i>
+                <span>CPF API</span>
+            </a>
+        </div>
+
+        <div class="account-selector">
+            <div class="position-relative">
+                <div class="account-dropdown" onclick="toggleAccountList()">
+                    <div class="account-name">
+                        <i class="bi bi-whatsapp"></i>
+                        <span id="currentAccountName">Selecione uma conta</span>
+                    </div>
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+                <div class="account-list" id="accountList">
+                    <div id="accountListItems"></div>
+                    <div class="add-account-btn" onclick="showAddAccountModal()">
+                        <i class="bi bi-plus-circle"></i>
+                        <span>Adicionar Conta</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-menu">
+            <div class="menu-category">Principal</div>
+            <a class="menu-item active" onclick="showSection('dashboard')">
+                <i class="bi bi-grid-1x2"></i>
+                <span>Dashboard</span>
+            </a>
+            <a class="menu-item" onclick="showSection('config')">
+                <i class="bi bi-gear"></i>
+                <span>Configurações</span>
+            </a>
+
+            <div class="menu-category">Personalização</div>
+            <a class="menu-item" onclick="showSection('template')">
+                <i class="bi bi-chat-square-text"></i>
+                <span>Template da Mensagem</span>
+            </a>
+
+            <div class="menu-category">Integração</div>
+            <a class="menu-item" onclick="showSection('javascript')">
+                <i class="bi bi-code-slash"></i>
+                <span>Código JavaScript</span>
+            </a>
+
+            <div class="menu-category">Ferramentas</div>
+            <a class="menu-item" onclick="showSection('testar')">
+                <i class="bi bi-search"></i>
+                <span>Testar Consulta</span>
+            </a>
+            <a class="menu-item" onclick="showSection('logs')">
+                <i class="bi bi-journal-text"></i>
+                <span>Logs</span>
+                <span class="badge bg-success ms-auto">Completo</span>
+            </a>
+
+            <div class="menu-category">Global</div>
+            <a class="menu-item" onclick="showSection('global')">
+                <i class="bi bi-key"></i>
+                <span>Token API CPF</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="page-header">
+            <h1 class="page-title" id="pageTitle">Dashboard</h1>
+            <div class="d-flex align-items-center gap-3">
+                <div class="status-badge">
+                    <div class="status-dot"></div>
+                    <span>API Online</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Section -->
+        <section class="section active" id="section-dashboard">
+            <div class="row g-4 mb-4">
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <div class="stat-icon purple"><i class="bi bi-search"></i></div>
+                        <div>
+                            <div class="stat-value" id="totalConsultas">0</div>
+                            <div class="stat-label">Consultas</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <div class="stat-icon green"><i class="bi bi-check-circle"></i></div>
+                        <div>
+                            <div class="stat-value" id="msgEnviadas">0</div>
+                            <div class="stat-label">Mensagens Enviadas</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card">
+                        <div class="stat-icon blue"><i class="bi bi-graph-up"></i></div>
+                        <div>
+                            <div class="stat-value" id="taxaSucesso">100%</div>
+                            <div class="stat-label">Taxa de Sucesso</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="config-card">
+                <div class="config-card-header">
+                    <h5><i class="bi bi-lightning me-2"></i>Início Rápido</h5>
+                </div>
+                <div class="config-card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <h6>1. Configure a Conta</h6>
+                            <p class="text-muted small">Adicione a chave de API do CRM DataCrazy</p>
+                            <button class="btn btn-primary btn-sm" onclick="showSection('config')">Configurar</button>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6>2. Personalize a Mensagem</h6>
+                            <p class="text-muted small">Customize como a resposta será enviada</p>
+                            <button class="btn btn-outline-primary btn-sm" onclick="showSection('template')">Personalizar</button>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6>3. Gere o Código JS</h6>
+                            <p class="text-muted small">Copie o código para usar no CRM</p>
+                            <button class="btn btn-outline-primary btn-sm" onclick="showSection('javascript')">Gerar Código</button>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <h6>4. Teste a Consulta</h6>
+                            <p class="text-muted small">Verifique se tudo está funcionando</p>
+                            <button class="btn btn-outline-primary btn-sm" onclick="showSection('testar')">Testar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Config Section -->
+        <section class="section" id="section-config">
+            <div class="config-card">
+                <div class="config-card-header">
+                    <h5><i class="bi bi-gear me-2"></i>Configurações da Conta</h5>
+                </div>
+                <div class="config-card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nome da Conta</label>
+                        <input type="text" class="form-control" id="accountName" placeholder="Ex: Loja Principal">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Chave de API do CRM DataCrazy</label>
+                        <input type="password" class="form-control" id="crmApiKey" placeholder="dc_eyJ...">
+                        <small class="text-muted">Encontre em: CRM DataCrazy > Configurações > API</small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary" onclick="salvarConfigConta()">
+                            <i class="bi bi-check me-1"></i>Salvar
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="excluirConta()">
+                            <i class="bi bi-trash me-1"></i>Excluir Conta
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Template Section -->
+        <section class="section" id="section-template">
+            <div class="config-card">
+                <div class="config-card-header">
+                    <h5><i class="bi bi-chat-square-text me-2"></i>Template da Mensagem</h5>
+                </div>
+                <div class="config-card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Variáveis Disponíveis</label>
+                        <div>
+                            <button class="variable-btn" onclick="insertVariable('{cpf_mascarado}')">{cpf_mascarado}</button>
+                            <button class="variable-btn" onclick="insertVariable('{cpf}')">{cpf}</button>
+                            <button class="variable-btn" onclick="insertVariable('{nome}')">{nome}</button>
+                            <button class="variable-btn" onclick="insertVariable('{nascimento}')">{nascimento}</button>
+                            <button class="variable-btn" onclick="insertVariable('{sexo}')">{sexo}</button>
+                            <button class="variable-btn" onclick="insertVariable('{nome_mae}')">{nome_mae}</button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Template da Mensagem</label>
+                        <textarea class="form-control" id="messageTemplate" rows="8" oninput="atualizarPreview()"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Formato do CPF</label>
+                        <select class="form-select" id="formatoCpf">
+                            <option value="mascarado">Mascarado (324.***.**98-00)</option>
+                            <option value="completo">Completo (324.075.598-00)</option>
+                            <option value="parcial">Parcial (***075598**)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mensagem de Erro</label>
+                        <textarea class="form-control" id="msgErro" rows="2"></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="salvarTemplate()">
+                        <i class="bi bi-check me-1"></i>Salvar Template
+                    </button>
+
+                    <hr class="my-4">
+
+                    <label class="form-label">Pré-visualização</label>
+                    <div class="message-preview" id="messagePreview">
+                        Selecione uma conta para ver a pré-visualização
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- JavaScript Section -->
+        <section class="section" id="section-javascript">
+            <div class="config-card">
+                <div class="config-card-header">
+                    <h5><i class="bi bi-code-slash me-2"></i>Código JavaScript para CRM</h5>
+                </div>
+                <div class="config-card-body">
+                    <p class="text-muted mb-3">Copie este código e cole na automação do CRM DataCrazy (Ação: Executar JavaScript)</p>
+                    <div class="code-block" id="codeBlock">
+                        <button class="copy-btn" onclick="copiarCodigo()">
+                            <i class="bi bi-clipboard me-1"></i>Copiar
+                        </button>
+                        <pre id="javascriptCode">Selecione uma conta para gerar o código</pre>
+                    </div>
+                    <button class="btn btn-primary mt-3" onclick="gerarJavascript()">
+                        <i class="bi bi-arrow-repeat me-1"></i>Gerar Código
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Testar Section -->
+        <section class="section" id="section-testar">
+            <div class="config-card">
+                <div class="config-card-header">
+                    <h5><i class="bi bi-search me-2"></i>Testar Consulta de CPF</h5>
+                </div>
+                <div class="config-card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">CPF para Consultar</label>
+                                <input type="text" class="form-control" id="cpfTeste" placeholder="000.000.000-00">
+                            </div>
+                            <button class="btn btn-primary" onclick="testarCpf()">
+                                <i class="bi bi-search me-1"></i>Consultar
+                            </button>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Resultado</label>
+                            <div class="message-preview" id="resultadoTeste">
+                                Insira um CPF e clique em Consultar
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Logs Section (COMPLETAMENTE REFEITO) -->
+        <section class="section" id="section-logs">
+            <div class="config-card">
+                <div class="config-card-header d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center gap-3">
+                        <h5 class="mb-0"><i class="bi bi-journal-text me-2"></i>Logs de Atividade</h5>
+                        <span class="logs-counter" id="logsCounter">0 registros</span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="export-btn" onclick="exportarTXT()">
+                            <i class="bi bi-download"></i>Exportar TXT
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" onclick="limparLogs()">
+                            <i class="bi bi-trash me-1"></i>Limpar
+                        </button>
+                    </div>
+                </div>
+                <div class="config-card-body">
+                    <!-- Filtros -->
+                    <div class="filter-bar">
+                        <div class="filter-group">
+                            <label>Buscar</label>
+                            <input type="text" class="form-control" id="logSearch" placeholder="CPF, nome, telefone..." style="min-width: 200px;" oninput="debounceSearch()">
+                        </div>
+                        <div class="filter-group">
+                            <label>Status</label>
+                            <select class="form-select" id="logStatusFilter" onchange="carregarLogs(1)" style="min-width: 140px;">
+                                <option value="">Todos</option>
+                                <option value="Sucesso">Sucesso</option>
+                                <option value="Erro">Erro</option>
+                                <option value="Parcial">Parcial</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Data Início</label>
+                            <input type="date" class="form-control" id="logDateFrom" onchange="carregarLogs(1)">
+                        </div>
+                        <div class="filter-group">
+                            <label>Data Fim</label>
+                            <input type="date" class="form-control" id="logDateTo" onchange="carregarLogs(1)">
+                        </div>
+                        <div class="filter-group">
+                            <label>Por Página</label>
+                            <select class="form-select" id="logPerPage" onchange="carregarLogs(1)" style="min-width: 100px;">
+                                <option value="25">25</option>
+                                <option value="50" selected>50</option>
+                                <option value="100">100</option>
+                                <option value="200">200</option>
+                                <option value="500">500</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-sm btn-outline-primary" onclick="limparFiltros()" style="padding: 8px 12px; border-radius: 8px;">
+                                <i class="bi bi-x-circle me-1"></i>Limpar Filtros
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tabela -->
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Data/Hora</th>
+                                    <th>Conta</th>
+                                    <th>Lead</th>
+                                    <th>Telefone</th>
+                                    <th>CPF</th>
+                                    <th>Status</th>
+                                    <th>Detalhes</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logsTableBody">
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted py-4">
+                                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                        Nenhum log registrado ainda
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Paginação -->
+                    <div class="pagination-controls" id="paginationControls" style="display: none;">
+                        <div class="pagination-info" id="paginationInfo"></div>
+                        <div class="pagination-buttons" id="paginationButtons"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Global Config Section -->
+        <section class="section" id="section-global">
+            <div class="config-card">
+                <div class="config-card-header">
+                    <h5><i class="bi bi-key me-2"></i>Configuração Global - Token API de CPF</h5>
+                </div>
+                <div class="config-card-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Este token é usado para todas as contas. Configure apenas uma vez.
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Token da API de CPF (cpf-brasil.org)</label>
+                        <input type="password" class="form-control" id="cpfApiToken" placeholder="Seu token da API">
+                    </div>
+                    <button class="btn btn-primary" onclick="salvarConfigGlobal()">
+                        <i class="bi bi-check me-1"></i>Salvar Token
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Add Account Modal -->
+    <div class="modal fade" id="addAccountModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>Nova Conta</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nome da Conta</label>
+                        <input type="text" class="form-control" id="newAccountName" placeholder="Ex: Loja Principal">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Chave de API do CRM DataCrazy</label>
+                        <input type="password" class="form-control" id="newAccountApiKey" placeholder="dc_eyJ...">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" onclick="criarConta()">Criar Conta</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentAccountId = null;
+        let accounts = [];
+        let currentPage = 1;
+        let searchTimeout = null;
+
+        // ==================== INICIALIZAÇÃO ====================
+        document.addEventListener('DOMContentLoaded', function() {
+            carregarContas();
+            carregarConfigGlobal();
+        });
+
+        // ==================== CONTAS ====================
+        function carregarContas() {
+            fetch('/api/accounts')
+                .then(r => r.json())
+                .then(data => {
+                    accounts = data.accounts || [];
+                    renderizarListaContas();
+                    if (accounts.length > 0 && !currentAccountId) {
+                        selecionarConta(accounts[0].id);
+                    }
+                });
+        }
+
+        function renderizarListaContas() {
+            const container = document.getElementById('accountListItems');
+            if (accounts.length === 0) {
+                container.innerHTML = '<div class="text-center text-muted py-3">Nenhuma conta cadastrada</div>';
+                return;
+            }
+            container.innerHTML = accounts.map(acc => `
+                <div class="account-item ${acc.id === currentAccountId ? 'active' : ''}" onclick="selecionarConta('${acc.id}')">
+                    <i class="bi bi-whatsapp"></i>
+                    <span>${acc.name}</span>
+                </div>
+            `).join('');
+        }
+
+        function toggleAccountList() {
+            document.getElementById('accountList').classList.toggle('show');
+        }
+
+        function selecionarConta(accountId) {
+            currentAccountId = accountId;
+            const acc = accounts.find(a => a.id === accountId);
+            if (acc) {
+                document.getElementById('currentAccountName').textContent = acc.name;
+            }
+            document.getElementById('accountList').classList.remove('show');
+            renderizarListaContas();
+            carregarDadosConta();
+            carregarLogs(1);
+            carregarStats();
+        }
+
+        function carregarDadosConta() {
+            if (!currentAccountId) return;
+            fetch(`/api/accounts/${currentAccountId}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        const acc = data.account;
+                        document.getElementById('accountName').value = acc.name || '';
+                        document.getElementById('crmApiKey').value = '';
+                        document.getElementById('crmApiKey').placeholder = acc.crm_api_key_preview || 'dc_eyJ...';
+                        document.getElementById('messageTemplate').value = acc.message_template || '';
+                        document.getElementById('formatoCpf').value = acc.formato_cpf || 'mascarado';
+                        document.getElementById('msgErro').value = acc.msg_erro || '';
+                        atualizarPreview();
+                    }
+                });
+        }
+
+        function showAddAccountModal() {
+            document.getElementById('accountList').classList.remove('show');
+            document.getElementById('newAccountName').value = '';
+            document.getElementById('newAccountApiKey').value = '';
+            new bootstrap.Modal(document.getElementById('addAccountModal')).show();
+        }
+
+        function criarConta() {
+            const name = document.getElementById('newAccountName').value;
+            const apiKey = document.getElementById('newAccountApiKey').value;
+            if (!name || !apiKey) {
+                showToast('Preencha todos os campos', 'error');
+                return;
+            }
+            fetch('/api/accounts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, crm_api_key: apiKey })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Conta criada com sucesso!', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('addAccountModal')).hide();
+                    carregarContas();
+                    setTimeout(() => selecionarConta(data.account_id), 500);
+                } else {
+                    showToast(data.error || 'Erro ao criar conta', 'error');
+                }
+            });
+        }
+
+        function salvarConfigConta() {
+            if (!currentAccountId) {
+                showToast('Selecione uma conta primeiro', 'error');
+                return;
+            }
+            const data = { name: document.getElementById('accountName').value };
+            const apiKey = document.getElementById('crmApiKey').value;
+            if (apiKey) data.crm_api_key = apiKey;
+            
+            fetch(`/api/accounts/${currentAccountId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Configurações salvas!', 'success');
+                    carregarContas();
+                }
+            });
+        }
+
+        function excluirConta() {
+            if (!currentAccountId) return;
+            if (!confirm('Tem certeza que deseja excluir esta conta? Os logs também serão removidos.')) return;
+            fetch(`/api/accounts/${currentAccountId}`, { method: 'DELETE' })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        showToast('Conta excluída!', 'success');
+                        currentAccountId = null;
+                        carregarContas();
+                    }
+                });
+        }
+
+        // ==================== TEMPLATE ====================
+        function salvarTemplate() {
+            if (!currentAccountId) {
+                showToast('Selecione uma conta primeiro', 'error');
+                return;
+            }
+            fetch(`/api/accounts/${currentAccountId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message_template: document.getElementById('messageTemplate').value,
+                    formato_cpf: document.getElementById('formatoCpf').value,
+                    msg_erro: document.getElementById('msgErro').value
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) showToast('Template salvo!', 'success');
+            });
+        }
+
+        function insertVariable(variable) {
+            const textarea = document.getElementById('messageTemplate');
+            const start = textarea.selectionStart;
+            const end = textarea.selectionEnd;
+            const text = textarea.value;
+            textarea.value = text.substring(0, start) + variable + text.substring(end);
+            textarea.focus();
+            textarea.setSelectionRange(start + variable.length, start + variable.length);
+            atualizarPreview();
+        }
+
+        function atualizarPreview() {
+            const template = document.getElementById('messageTemplate').value;
+            const preview = template
+                .replace('{cpf_mascarado}', '324.***.**98-00')
+                .replace('{cpf}', '324.075.598-00')
+                .replace('{nome}', 'João da Silva')
+                .replace('{nascimento}', '15/03/1990')
+                .replace('{sexo}', 'Masculino')
+                .replace('{nome_mae}', 'Maria da Silva');
+            document.getElementById('messagePreview').textContent = preview;
+        }
+
+        // ==================== JAVASCRIPT ====================
+        function gerarJavascript() {
+            if (!currentAccountId) {
+                showToast('Selecione uma conta primeiro', 'error');
+                return;
+            }
+            fetch(`/api/accounts/${currentAccountId}/javascript`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('javascriptCode').textContent = data.javascript;
+                        showToast('Código gerado!', 'success');
+                    }
+                });
+        }
+
+        function copiarCodigo() {
+            const code = document.getElementById('javascriptCode').textContent;
+            navigator.clipboard.writeText(code);
+            showToast('Código copiado!', 'success');
+        }
+
+        // ==================== TESTAR ====================
+        function testarCpf() {
+            const cpf = document.getElementById('cpfTeste').value;
+            if (!cpf) {
+                showToast('Digite um CPF', 'error');
+                return;
+            }
+            document.getElementById('resultadoTeste').textContent = 'Consultando...';
+            fetch('/api/consultar-cpf', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cpf })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.dados) {
+                    const d = data.dados;
+                    document.getElementById('resultadoTeste').textContent = 
+                        `Nome: ${d.NOME || d.nome}\nNascimento: ${d.NASC || d.nascimento}\nSexo: ${d.SEXO || d.sexo}\nMãe: ${d.NOME_MAE || d.nome_mae}`;
+                } else {
+                    document.getElementById('resultadoTeste').textContent = data.error || 'CPF não encontrado';
+                }
+            });
+        }
+
+        // ==================== LOGS (COMPLETAMENTE REFEITO) ====================
+        function getFilterParams() {
+            const search = document.getElementById('logSearch').value.trim();
+            const status = document.getElementById('logStatusFilter').value;
+            const dateFrom = document.getElementById('logDateFrom').value;
+            const dateTo = document.getElementById('logDateTo').value;
+            const perPage = document.getElementById('logPerPage').value;
+            
+            let params = `per_page=${perPage}`;
+            if (search) params += `&search=${encodeURIComponent(search)}`;
+            if (status) params += `&status=${encodeURIComponent(status)}`;
+            if (dateFrom) params += `&date_from=${dateFrom}`;
+            if (dateTo) params += `&date_to=${dateTo}`;
+            return params;
+        }
+
+        function carregarLogs(page) {
+            if (!currentAccountId) return;
+            if (page) currentPage = page;
+            
+            const params = getFilterParams();
+            
+            fetch(`/api/accounts/${currentAccountId}/logs?page=${currentPage}&${params}`)
+                .then(r => r.json())
+                .then(data => {
+                    const tbody = document.getElementById('logsTableBody');
+                    const counter = document.getElementById('logsCounter');
+                    
+                    counter.textContent = `${data.total || 0} registros`;
+                    
+                    if (data.logs && data.logs.length > 0) {
+                        tbody.innerHTML = data.logs.map(log => `
+                            <tr>
+                                <td><small>${log.data}</small></td>
+                                <td><span class="badge bg-primary">${log.account_name || '-'}</span></td>
+                                <td><strong>${log.lead_name || '-'}</strong></td>
+                                <td><a href="https://wa.me/${log.lead_phone}" target="_blank">${formatPhone(log.lead_phone)}</a></td>
+                                <td><code>${log.cpf}</code></td>
+                                <td><span class="badge ${log.status === 'Sucesso' ? 'bg-success' : log.status === 'Parcial' ? 'bg-warning' : 'bg-danger'}">${log.status}</span></td>
+                                <td><small class="text-muted">${log.detalhes}</small></td>
+                            </tr>
+                        `).join('');
+                        
+                        // Paginação
+                        renderizarPaginacao(data);
+                    } else {
+                        tbody.innerHTML = `
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-4">
+                                    <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                                    Nenhum log encontrado
+                                </td>
+                            </tr>
+                        `;
+                        document.getElementById('paginationControls').style.display = 'none';
+                    }
+                });
+        }
+
+        function renderizarPaginacao(data) {
+            const controls = document.getElementById('paginationControls');
+            const info = document.getElementById('paginationInfo');
+            const buttons = document.getElementById('paginationButtons');
+            
+            if (data.total_pages <= 1) {
+                controls.style.display = 'flex';
+                info.textContent = `Mostrando ${data.total} de ${data.total} registros`;
+                buttons.innerHTML = '';
+                return;
+            }
+            
+            controls.style.display = 'flex';
+            
+            const start = (data.page - 1) * data.per_page + 1;
+            const end = Math.min(data.page * data.per_page, data.total);
+            info.textContent = `Mostrando ${start}-${end} de ${data.total} registros (Página ${data.page} de ${data.total_pages})`;
+            
+            let html = '';
+            
+            // Botão Anterior
+            html += `<button onclick="carregarLogs(1)" ${data.page === 1 ? 'disabled' : ''}><i class="bi bi-chevron-double-left"></i></button>`;
+            html += `<button onclick="carregarLogs(${data.page - 1})" ${!data.has_prev ? 'disabled' : ''}><i class="bi bi-chevron-left"></i></button>`;
+            
+            // Páginas
+            let startPage = Math.max(1, data.page - 2);
+            let endPage = Math.min(data.total_pages, data.page + 2);
+            
+            if (startPage > 1) {
+                html += `<button onclick="carregarLogs(1)">1</button>`;
+                if (startPage > 2) html += `<button disabled>...</button>`;
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                html += `<button onclick="carregarLogs(${i})" class="${i === data.page ? 'active' : ''}">${i}</button>`;
+            }
+            
+            if (endPage < data.total_pages) {
+                if (endPage < data.total_pages - 1) html += `<button disabled>...</button>`;
+                html += `<button onclick="carregarLogs(${data.total_pages})">${data.total_pages}</button>`;
+            }
+            
+            // Botão Próximo
+            html += `<button onclick="carregarLogs(${data.page + 1})" ${!data.has_next ? 'disabled' : ''}><i class="bi bi-chevron-right"></i></button>`;
+            html += `<button onclick="carregarLogs(${data.total_pages})" ${data.page === data.total_pages ? 'disabled' : ''}><i class="bi bi-chevron-double-right"></i></button>`;
+            
+            buttons.innerHTML = html;
+        }
+
+        function debounceSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => carregarLogs(1), 400);
+        }
+
+        function limparFiltros() {
+            document.getElementById('logSearch').value = '';
+            document.getElementById('logStatusFilter').value = '';
+            document.getElementById('logDateFrom').value = '';
+            document.getElementById('logDateTo').value = '';
+            document.getElementById('logPerPage').value = '50';
+            carregarLogs(1);
+        }
+
+        function exportarTXT() {
+            if (!currentAccountId) {
+                showToast('Selecione uma conta primeiro', 'error');
+                return;
+            }
+            const params = getFilterParams();
+            window.open(`/api/accounts/${currentAccountId}/logs/export?${params}`, '_blank');
+            showToast('Exportando TXT com todos os logs desta conta...', 'success');
+        }
+
+        function limparLogs() {
+            if (!currentAccountId) return;
+            if (!confirm('Tem certeza que deseja limpar TODOS os logs desta conta? Esta ação não pode ser desfeita.')) return;
+            fetch(`/api/accounts/${currentAccountId}/logs`, { method: 'DELETE' })
+                .then(r => r.json())
+                .then(data => {
+                    showToast('Logs limpos!', 'success');
+                    carregarLogs(1);
+                });
+        }
+
+        function formatPhone(phone) {
+            if (!phone || phone === '-') return '-';
+            const nums = phone.replace(/\D/g, '');
+            if (nums.length === 13) {
+                return `+${nums.slice(0,2)} (${nums.slice(2,4)}) ${nums.slice(4,9)}-${nums.slice(9)}`;
+            }
+            return phone;
+        }
+
+        // ==================== STATS ====================
+        function carregarStats() {
+            if (!currentAccountId) return;
+            fetch(`/api/accounts/${currentAccountId}/stats`)
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('totalConsultas').textContent = data.total_consultas || 0;
+                    document.getElementById('msgEnviadas').textContent = data.msg_enviadas || 0;
+                    document.getElementById('taxaSucesso').textContent = data.taxa_sucesso || '100%';
+                });
+        }
+
+        // ==================== CONFIG GLOBAL ====================
+        function carregarConfigGlobal() {
+            fetch('/api/config')
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('cpfApiToken').placeholder = data.cpf_api_token || 'Seu token da API';
+                });
+        }
+
+        function salvarConfigGlobal() {
+            const token = document.getElementById('cpfApiToken').value;
+            if (!token) {
+                showToast('Digite o token', 'error');
+                return;
+            }
+            fetch('/api/config', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cpf_api_token: token })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('Token salvo!', 'success');
+                    document.getElementById('cpfApiToken').value = '';
+                    carregarConfigGlobal();
+                }
+            });
+        }
+
+        // ==================== NAVEGAÇÃO ====================
+        function showSection(section) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+            
+            document.getElementById('section-' + section).classList.add('active');
+            event.target.closest('.menu-item').classList.add('active');
+            
+            const titles = {
+                'dashboard': 'Dashboard',
+                'config': 'Configurações da Conta',
+                'template': 'Template da Mensagem',
+                'javascript': 'Código JavaScript',
+                'testar': 'Testar Consulta',
+                'logs': 'Logs de Atividade',
+                'global': 'Configuração Global'
+            };
+            document.getElementById('pageTitle').textContent = titles[section] || 'Dashboard';
+            
+            if (section === 'logs') carregarLogs(1);
+            if (section === 'dashboard') carregarStats();
+        }
+
+        // ==================== TOAST ====================
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'custom-toast';
+            const icons = {
+                'success': '<i class="bi bi-check-circle text-success"></i>',
+                'error': '<i class="bi bi-x-circle text-danger"></i>',
+                'info': '<i class="bi bi-info-circle text-primary"></i>'
+            };
+            toast.innerHTML = `${icons[type] || icons.info}<span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        // Fecha dropdown ao clicar fora
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.account-selector')) {
+                document.getElementById('accountList').classList.remove('show');
+            }
+        });
+
+        // Atualiza logs a cada 30 segundos
+        setInterval(() => {
+            if (currentAccountId) {
+                carregarLogs();
+                carregarStats();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>
