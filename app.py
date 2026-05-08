@@ -54,6 +54,13 @@ Mãe: {nome_mae}
 
 Caso precise de mais informações, estou à disposição."""
 
+DEFAULT_CNPJ_TEMPLATE = """Olá! Encontrei os dados do CNPJ consultado:
+
+CNPJ: {cnpj}
+Razão Social: {razao_social}
+
+Caso precise de mais informações, estou à disposição."""
+
 # ==================== OTIMIZAÇÕES ====================
 
 executor = ThreadPoolExecutor(max_workers=10)
@@ -68,6 +75,7 @@ def criar_sessao_otimizada():
 
 crm_session = criar_sessao_otimizada()
 cpf_session = criar_sessao_otimizada()
+cnpj_session = criar_sessao_otimizada()
 
 # ==================== SISTEMA MULTI-CONTA ====================
 
@@ -83,7 +91,11 @@ def get_logs_file():
 def load_accounts():
     try:
         with open(get_accounts_file(), 'r') as f:
-            return json.load(f)
+            accounts = json.load(f)
+            for acc in accounts.values():
+                acc.setdefault('cnpj_message_template', DEFAULT_CNPJ_TEMPLATE)
+                acc.setdefault('msg_erro_cnpj', 'Desculpe, não foi possível consultar os dados do CNPJ informado.')
+            return accounts
     except:
         return {}
 
@@ -151,33 +163,12 @@ config = {
 
 # ==================== FUNÇÕES AUXILIARES ====================
 
-def detectar_cnpj(texto):
-    if not texto:
-        return False
-    numeros = re.sub(r'[^\d]', '', texto)
-    if len(numeros) == 14:
-        return True
-    padrao_cnpj = r'\d{2}[\.]?\d{3}[\.]?\d{3}[\/]?\d{4}[\-]?\d{2}'
-    if re.search(padrao_cnpj, texto):
-        return True
-    return False
+def somente_numeros(texto):
+    return re.sub(r'[^\d]', '', texto or '')
 
-def extrair_cpf(texto):
-    if not texto:
-        return None
-    if detectar_cnpj(texto):
-        return None
-    numeros = re.sub(r'[^\d]', '', texto)
-    if len(numeros) == 14:
-        return None
-    if len(numeros) >= 11:
-        for i in range(len(numeros) - 10):
-            cpf_candidato = numeros[i:i+11]
-            if validar_cpf_rapido(cpf_candidato):
-                return cpf_candidato
-    return None
 
 def validar_cpf_rapido(cpf):
+    cpf = somente_numeros(cpf)
     if not cpf or len(cpf) != 11 or cpf == cpf[0] * 11:
         return False
     soma1 = sum(int(cpf[i]) * (10 - i) for i in range(9))
@@ -185,6 +176,88 @@ def validar_cpf_rapido(cpf):
     soma2 = sum(int(cpf[i]) * (11 - i) for i in range(10))
     d2 = 0 if soma2 % 11 < 2 else 11 - (soma2 % 11)
     return cpf[-2:] == f"{d1}{d2}"
+
+
+def validar_cnpj_rapido(cnpj):
+    cnpj = somente_numeros(cnpj)
+    if not cnpj or len(cnpj) != 14 or cnpj == cnpj[0] * 14:
+        return False
+
+    pesos_1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+    pesos_2 = [6] + pesos_1
+
+    soma1 = sum(int(cnpj[i]) * pesos_1[i] for i in range(12))
+    resto1 = soma1 % 11
+    d1 = 0 if resto1 < 2 else 11 - resto1
+
+    soma2 = sum(int(cnpj[i]) * pesos_2[i] for i in range(13))
+    resto2 = soma2 % 11
+    d2 = 0 if resto2 < 2 else 11 - resto2
+
+    return cnpj[-2:] == f"{d1}{d2}"
+
+
+def detectar_cnpj(texto):
+    return extrair_cnpj(texto) is not None
+
+
+def extrair_cnpj(texto):
+    if not texto:
+        return None
+
+    padrao_cnpj = r'\d{2}[\.]?\d{3}[\.]?\d{3}[\/]?\d{4}[\-]?\d{2}'
+    for match in re.findall(padrao_cnpj, texto):
+        cnpj = somente_numeros(match)
+        if validar_cnpj_rapido(cnpj):
+            return cnpj
+
+    numeros = somente_numeros(texto)
+    if len(numeros) == 14 and validar_cnpj_rapido(numeros):
+        return numeros
+
+    if len(numeros) > 14:
+        for i in range(len(numeros) - 13):
+            cnpj_candidato = numeros[i:i+14]
+            if validar_cnpj_rapido(cnpj_candidato):
+                return cnpj_candidato
+
+    return None
+
+
+def extrair_cpf(texto):
+    if not texto:
+        return None
+
+    padrao_cpf = r'\d{3}[\.]?\d{3}[\.]?\d{3}[\-]?\d{2}'
+    for match in re.findall(padrao_cpf, texto):
+        cpf = somente_numeros(match)
+        if validar_cpf_rapido(cpf):
+            return cpf
+
+    numeros = somente_numeros(texto)
+    if len(numeros) == 11 and validar_cpf_rapido(numeros):
+        return numeros
+
+    if len(numeros) > 11:
+        for i in range(len(numeros) - 10):
+            cpf_candidato = numeros[i:i+11]
+            if validar_cpf_rapido(cpf_candidato):
+                return cpf_candidato
+
+    return None
+
+
+def extrair_documento(texto):
+    """Retorna uma tupla (tipo, numero), onde tipo é 'cpf' ou 'cnpj'."""
+    cnpj = extrair_cnpj(texto)
+    if cnpj:
+        return 'cnpj', cnpj
+
+    cpf = extrair_cpf(texto)
+    if cpf:
+        return 'cpf', cpf
+
+    return None, None
 
 def buscar_mensagens_conversa(conversation_id, api_key):
     if not api_key:
@@ -230,6 +303,26 @@ def consultar_cpf(cpf):
     except:
         return None
 
+
+def consultar_cnpj(cnpj):
+    cnpj = somente_numeros(cnpj)
+    if not validar_cnpj_rapido(cnpj):
+        return None
+
+    url = f"https://brasilapi.com.br/api/cnpj/v1/{cnpj}"
+    headers = {
+        "Content-Type": "application/json",
+        "Connection": "keep-alive",
+        "User-Agent": "apicpf2-cpf-cnpj/1.0"
+    }
+    try:
+        response = cnpj_session.get(url, headers=headers, timeout=15)
+        if response.status_code == 200:
+            return response.json()
+        return None
+    except:
+        return None
+
 def enviar_mensagem_conversa(conversation_id, mensagem, api_key):
     if not api_key:
         return None
@@ -252,6 +345,14 @@ def formatar_cpf(cpf, formato='mascarado'):
     elif formato == 'parcial':
         return f"***{cpf[3:9]}**"
     return f"{cpf[:3]}.***.**{cpf[-4:-2]}-{cpf[-2:]}"
+
+
+def formatar_cnpj(cnpj):
+    cnpj = somente_numeros(cnpj)
+    if len(cnpj) != 14:
+        return cnpj
+    return f"{cnpj[:2]}.{cnpj[2:5]}.{cnpj[5:8]}/{cnpj[8:12]}-{cnpj[12:]}"
+
 
 def formatar_mensagem(dados_cpf, cpf, account):
     template = account.get('message_template', DEFAULT_TEMPLATE)
@@ -280,6 +381,28 @@ def formatar_mensagem(dados_cpf, cpf, account):
     except KeyError:
         mensagem = DEFAULT_TEMPLATE.format(**dados)
     
+    linhas = [l for l in mensagem.split('\n') if not l.strip().endswith(':') or not l.strip()]
+    return '\n'.join(linhas)
+
+
+def formatar_mensagem_cnpj(dados_cnpj, cnpj, account):
+    template = account.get('cnpj_message_template', DEFAULT_CNPJ_TEMPLATE)
+    msg_erro = account.get('msg_erro_cnpj', "Desculpe, não foi possível consultar os dados do CNPJ informado.")
+
+    if not dados_cnpj:
+        return msg_erro
+
+    dados = {
+        'cnpj': formatar_cnpj(cnpj),
+        'cnpj_numeros': somente_numeros(cnpj),
+        'razao_social': dados_cnpj.get('razao_social') or dados_cnpj.get('nome') or 'Não disponível'
+    }
+
+    try:
+        mensagem = template.format(**dados)
+    except KeyError:
+        mensagem = DEFAULT_CNPJ_TEMPLATE.format(**dados)
+
     linhas = [l for l in mensagem.split('\n') if not l.strip().endswith(':') or not l.strip()]
     return '\n'.join(linhas)
 
@@ -319,8 +442,10 @@ def api_accounts():
         'name': name,
         'crm_api_key': crm_api_key,
         'message_template': DEFAULT_TEMPLATE,
+        'cnpj_message_template': DEFAULT_CNPJ_TEMPLATE,
         'formato_cpf': 'mascarado',
         'msg_erro': 'Desculpe, não foi possível consultar os dados do CPF informado.',
+        'msg_erro_cnpj': 'Desculpe, não foi possível consultar os dados do CNPJ informado.',
         'created_at': datetime.now().isoformat()
     }
     save_accounts(accounts)
@@ -347,10 +472,14 @@ def api_account(account_id):
             accounts[account_id]['crm_api_key'] = data['crm_api_key']
         if 'message_template' in data:
             accounts[account_id]['message_template'] = data['message_template']
+        if 'cnpj_message_template' in data:
+            accounts[account_id]['cnpj_message_template'] = data['cnpj_message_template']
         if 'formato_cpf' in data:
             accounts[account_id]['formato_cpf'] = data['formato_cpf']
         if 'msg_erro' in data:
             accounts[account_id]['msg_erro'] = data['msg_erro']
+        if 'msg_erro_cnpj' in data:
+            accounts[account_id]['msg_erro_cnpj'] = data['msg_erro_cnpj']
         save_accounts(accounts)
         add_log(account_id, 'CONFIG', '-', 'Sucesso', 'Configurações atualizadas')
         return jsonify({"success": True, "message": "Conta atualizada!"})
@@ -508,7 +637,7 @@ def export_account_logs(account_id):
         lines.append(f'Data/Hora:  {log.get("data", "-")}')
         lines.append(f'Lead:       {log.get("lead_name", "-")}')
         lines.append(f'Telefone:   {log.get("lead_phone", "-")}')
-        lines.append(f'CPF:        {log.get("cpf", "-")}')
+        lines.append(f'Documento:  {log.get("cpf", "-")}')
         lines.append(f'Status:     {log.get("status", "-")}')
         lines.append(f'Detalhes:   {log.get("detalhes", "-")}')
         lines.append('')
@@ -613,9 +742,9 @@ def webhook_datacrazy():
             add_log(account_id, 'WEBHOOK', '-', 'Erro', 'conversationId não fornecido', lead_phone, lead_name)
             return jsonify({"success": False, "error": "conversationId é obrigatório"}), 400
         
-        cpf = extrair_cpf(mensagem_direta) if mensagem_direta else None
+        documento_tipo, documento = extrair_documento(mensagem_direta) if mensagem_direta else (None, None)
         
-        if not cpf:
+        if not documento:
             mensagens = buscar_mensagens_conversa(conversation_id, api_key)
             if mensagens:
                 try:
@@ -625,14 +754,48 @@ def webhook_datacrazy():
                 for msg in mensagens[:10]:
                     body = msg.get('body', '')
                     if body:
-                        cpf = extrair_cpf(body)
-                        if cpf:
+                        documento_tipo, documento = extrair_documento(body)
+                        if documento:
                             break
         
-        if not cpf:
-            add_log(account_id, 'CONSULTA', '-', 'Erro', 'CPF não encontrado', lead_phone, lead_name)
-            return jsonify({"success": False, "error": "CPF não encontrado nas mensagens"}), 404
+        if not documento:
+            add_log(account_id, 'CONSULTA', '-', 'Erro', 'CPF/CNPJ não encontrado', lead_phone, lead_name)
+            return jsonify({"success": False, "error": "CPF ou CNPJ não encontrado nas mensagens"}), 404
         
+        if documento_tipo == 'cnpj':
+            if not validar_cnpj_rapido(documento):
+                add_log(account_id, 'CONSULTA', documento, 'Erro', 'CNPJ inválido', lead_phone, lead_name)
+                return jsonify({"success": False, "error": "CNPJ inválido", "cnpj_encontrado": documento}), 400
+
+            dados_cnpj = consultar_cnpj(documento)
+            mensagem_resposta = formatar_mensagem_cnpj(dados_cnpj, documento, account)
+            resultado_envio = enviar_mensagem_conversa(conversation_id, mensagem_resposta, api_key)
+            razao_social = dados_cnpj.get('razao_social', '') if dados_cnpj else ''
+
+            if resultado_envio:
+                add_log(account_id, 'CONSULTA', documento, 'Sucesso', f'Razão Social: {razao_social}', lead_phone, lead_name)
+            else:
+                add_log(account_id, 'CONSULTA', documento, 'Parcial', f'Razão Social: {razao_social} (msg não enviada)', lead_phone, lead_name)
+
+            return jsonify({
+                "success": True,
+                "tipo": "cnpj",
+                "cnpj": documento,
+                "cnpj_formatado": formatar_cnpj(documento),
+                "cnpj_valido": True,
+                "razao_social": razao_social,
+                "dados": {
+                    "cnpj": documento,
+                    "cnpj_formatado": formatar_cnpj(documento),
+                    "razao_social": razao_social
+                } if dados_cnpj else None,
+                "mensagem_formatada": mensagem_resposta,
+                "conversationId": conversation_id,
+                "mensagem_enviada": resultado_envio is not None,
+                "account": account.get('name')
+            })
+        
+        cpf = documento
         if not validar_cpf_rapido(cpf):
             add_log(account_id, 'CONSULTA', cpf, 'Erro', 'CPF inválido', lead_phone, lead_name)
             return jsonify({"success": False, "error": "CPF inválido", "cpf_encontrado": cpf}), 400
@@ -649,6 +812,7 @@ def webhook_datacrazy():
         
         return jsonify({
             "success": True,
+            "tipo": "cpf",
             "cpf": cpf,
             "cpf_valido": True,
             "dados": dados_cpf,
@@ -667,17 +831,38 @@ def webhook_datacrazy():
 @app.route('/api/consultar-cpf', methods=['POST'])
 def consultar_cpf_endpoint():
     try:
-        data = request.get_json()
-        cpf_raw = data.get('cpf', '')
-        cpf = re.sub(r'[^\d]', '', cpf_raw)
-        if len(cpf) != 11:
-            return jsonify({"success": False, "error": "CPF deve ter 11 dígitos"}), 400
-        if not validar_cpf_rapido(cpf):
+        data = request.get_json() or {}
+        documento_raw = data.get('documento') or data.get('cpf') or data.get('cnpj') or ''
+        documento_tipo, documento = extrair_documento(documento_raw)
+
+        if not documento:
+            return jsonify({"success": False, "error": "Informe um CPF ou CNPJ válido"}), 400
+
+        if documento_tipo == 'cnpj':
+            if not validar_cnpj_rapido(documento):
+                return jsonify({"success": False, "error": "CNPJ inválido"}), 400
+            dados = consultar_cnpj(documento)
+            razao_social = dados.get('razao_social') if dados else None
+            return jsonify({
+                "success": True if dados else False,
+                "tipo": "cnpj",
+                "cnpj": documento,
+                "cnpj_formatado": formatar_cnpj(documento),
+                "razao_social": razao_social,
+                "dados": {
+                    "cnpj": documento,
+                    "cnpj_formatado": formatar_cnpj(documento),
+                    "razao_social": razao_social
+                } if dados else None
+            })
+
+        if not validar_cpf_rapido(documento):
             return jsonify({"success": False, "error": "CPF inválido"}), 400
-        dados = consultar_cpf(cpf)
+        dados = consultar_cpf(documento)
         return jsonify({
             "success": True if dados else False,
-            "cpf": cpf,
+            "tipo": "cpf",
+            "cpf": documento,
             "dados": dados
         })
     except Exception as e:

@@ -1,6 +1,6 @@
-# API de Consulta CPF para CRM DataCrazy
+# API de Consulta CPF/CNPJ para CRM DataCrazy
 
-API completa com painel de configuração para consultar CPF e enviar automaticamente para leads no WhatsApp via CRM DataCrazy.
+API completa com painel de configuração para consultar CPF e CNPJ e enviar automaticamente para leads no WhatsApp via CRM DataCrazy.
 
 ## 🚀 Deploy no Railway
 
@@ -43,13 +43,18 @@ Na aba **Configurações**, insira:
 ### 3. Personalizar Mensagem
 Na aba **Template da Mensagem**, personalize como a resposta será enviada.
 
-Variáveis disponíveis:
+Variáveis disponíveis para CPF:
 - `{cpf_mascarado}` - CPF parcialmente oculto (123.***.**56-78)
 - `{cpf}` - CPF completo
 - `{nome}` - Nome do titular
 - `{nascimento}` - Data de nascimento
 - `{sexo}` - Sexo
 - `{nome_mae}` - Nome da mãe
+
+Variáveis para CNPJ na resposta automática padrão:
+- `{cnpj}` - CNPJ formatado
+- `{cnpj_numeros}` - CNPJ apenas com números
+- `{razao_social}` - Razão social da empresa
 
 ### 4. Gerar Código JavaScript
 Na aba **Código JavaScript**:
@@ -74,7 +79,7 @@ Na aba **Código JavaScript**:
 | GET | `/health` | Health check |
 | GET/POST | `/api/config` | Configurações da API |
 | POST | `/api/webhook/datacrazy` | Webhook principal |
-| POST | `/api/consultar-cpf` | Consulta CPF direta |
+| POST | `/api/consultar-cpf` | Consulta CPF/CNPJ direta |
 | POST | `/api/gerar-javascript` | Gera código JS |
 
 ---
@@ -100,6 +105,7 @@ cpf_api_final/
 - As chaves de API são armazenadas apenas em memória
 - Mensagens são formatadas para evitar banimento no WhatsApp
 - CPF é parcialmente mascarado nas respostas
+- CNPJ é consultado pela BrasilAPI e retorna CNPJ formatado e razão social
 
 ---
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CPF API - Painel Multi-Conta</title>
+    <title>CPF/CNPJ API - Painel Multi-Conta</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -468,7 +468,7 @@
         <div class="sidebar-header">
             <a href="#" class="sidebar-logo">
                 <i class="bi bi-cpu"></i>
-                <span>CPF API</span>
+                <span>CPF/CNPJ API</span>
             </a>
         </div>
 
@@ -643,43 +643,82 @@
                     <h5><i class="bi bi-chat-square-text me-2"></i>Template da Mensagem</h5>
                 </div>
                 <div class="config-card-body">
-                    <div class="mb-3">
-                        <label class="form-label">Variáveis Disponíveis</label>
-                        <div>
-                            <button class="variable-btn" onclick="insertVariable('{cpf_mascarado}')">{cpf_mascarado}</button>
-                            <button class="variable-btn" onclick="insertVariable('{cpf}')">{cpf}</button>
-                            <button class="variable-btn" onclick="insertVariable('{nome}')">{nome}</button>
-                            <button class="variable-btn" onclick="insertVariable('{nascimento}')">{nascimento}</button>
-                            <button class="variable-btn" onclick="insertVariable('{sexo}')">{sexo}</button>
-                            <button class="variable-btn" onclick="insertVariable('{nome_mae}')">{nome_mae}</button>
+                    <ul class="nav nav-pills mb-4" id="templateTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="cpf-template-tab" data-bs-toggle="pill" data-bs-target="#cpf-template-pane" type="button" role="tab">Template CPF</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="cnpj-template-tab" data-bs-toggle="pill" data-bs-target="#cnpj-template-pane" type="button" role="tab">Template CNPJ</button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="cpf-template-pane" role="tabpanel">
+                            <div class="mb-3">
+                                <label class="form-label">Variáveis Disponíveis para CPF</label>
+                                <div>
+                                    <button class="variable-btn" onclick="insertVariable('{cpf_mascarado}', 'messageTemplate')">{cpf_mascarado}</button>
+                                    <button class="variable-btn" onclick="insertVariable('{cpf}', 'messageTemplate')">{cpf}</button>
+                                    <button class="variable-btn" onclick="insertVariable('{nome}', 'messageTemplate')">{nome}</button>
+                                    <button class="variable-btn" onclick="insertVariable('{nascimento}', 'messageTemplate')">{nascimento}</button>
+                                    <button class="variable-btn" onclick="insertVariable('{sexo}', 'messageTemplate')">{sexo}</button>
+                                    <button class="variable-btn" onclick="insertVariable('{nome_mae}', 'messageTemplate')">{nome_mae}</button>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Template da Mensagem de CPF</label>
+                                <textarea class="form-control" id="messageTemplate" rows="8" oninput="atualizarPreview()"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Formato do CPF</label>
+                                <select class="form-select" id="formatoCpf">
+                                    <option value="mascarado">Mascarado (324.***.**98-00)</option>
+                                    <option value="completo">Completo (324.075.598-00)</option>
+                                    <option value="parcial">Parcial (***075598**)</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Mensagem de Erro do CPF</label>
+                                <textarea class="form-control" id="msgErro" rows="2"></textarea>
+                            </div>
+
+                            <label class="form-label">Pré-visualização CPF</label>
+                            <div class="message-preview" id="messagePreview">
+                                Selecione uma conta para ver a pré-visualização
+                            </div>
+                        </div>
+
+                        <div class="tab-pane fade" id="cnpj-template-pane" role="tabpanel">
+                            <div class="mb-3">
+                                <label class="form-label">Variáveis Disponíveis para CNPJ</label>
+                                <div>
+                                    <button class="variable-btn" onclick="insertVariable('{cnpj}', 'cnpjMessageTemplate')">{cnpj}</button>
+                                    <button class="variable-btn" onclick="insertVariable('{cnpj_numeros}', 'cnpjMessageTemplate')">{cnpj_numeros}</button>
+                                    <button class="variable-btn" onclick="insertVariable('{razao_social}', 'cnpjMessageTemplate')">{razao_social}</button>
+                                </div>
+                                <small class="text-muted">Use essas variáveis para montar a mensagem enviada quando o cliente mandar um CNPJ.</small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Template da Mensagem de CNPJ</label>
+                                <textarea class="form-control" id="cnpjMessageTemplate" rows="8" oninput="atualizarPreviewCnpj()"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Mensagem de Erro do CNPJ</label>
+                                <textarea class="form-control" id="msgErroCnpj" rows="2"></textarea>
+                            </div>
+
+                            <label class="form-label">Pré-visualização CNPJ</label>
+                            <div class="message-preview" id="cnpjMessagePreview">
+                                Selecione uma conta para ver a pré-visualização
+                            </div>
                         </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Template da Mensagem</label>
-                        <textarea class="form-control" id="messageTemplate" rows="8" oninput="atualizarPreview()"></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Formato do CPF</label>
-                        <select class="form-select" id="formatoCpf">
-                            <option value="mascarado">Mascarado (324.***.**98-00)</option>
-                            <option value="completo">Completo (324.075.598-00)</option>
-                            <option value="parcial">Parcial (***075598**)</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Mensagem de Erro</label>
-                        <textarea class="form-control" id="msgErro" rows="2"></textarea>
-                    </div>
-                    <button class="btn btn-primary" onclick="salvarTemplate()">
-                        <i class="bi bi-check me-1"></i>Salvar Template
-                    </button>
 
                     <hr class="my-4">
 
-                    <label class="form-label">Pré-visualização</label>
-                    <div class="message-preview" id="messagePreview">
-                        Selecione uma conta para ver a pré-visualização
-                    </div>
+                    <button class="btn btn-primary" onclick="salvarTemplate()">
+                        <i class="bi bi-check me-1"></i>Salvar Templates
+                    </button>
                 </div>
             </div>
         </section>
@@ -709,14 +748,14 @@
         <section class="section" id="section-testar">
             <div class="config-card">
                 <div class="config-card-header">
-                    <h5><i class="bi bi-search me-2"></i>Testar Consulta de CPF</h5>
+                    <h5><i class="bi bi-search me-2"></i>Testar Consulta de CPF/CNPJ</h5>
                 </div>
                 <div class="config-card-body">
                     <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">CPF para Consultar</label>
-                                <input type="text" class="form-control" id="cpfTeste" placeholder="000.000.000-00">
+                                <label class="form-label">CPF ou CNPJ para Consultar</label>
+                                <input type="text" class="form-control" id="cpfTeste" placeholder="000.000.000-00 ou 00.000.000/0000-00">
                             </div>
                             <button class="btn btn-primary" onclick="testarCpf()">
                                 <i class="bi bi-search me-1"></i>Consultar
@@ -725,7 +764,7 @@
                         <div class="col-md-6">
                             <label class="form-label">Resultado</label>
                             <div class="message-preview" id="resultadoTeste">
-                                Insira um CPF e clique em Consultar
+                                Insira um CPF ou CNPJ e clique em Consultar
                             </div>
                         </div>
                     </div>
@@ -755,7 +794,7 @@
                     <div class="filter-bar">
                         <div class="filter-group">
                             <label>Buscar</label>
-                            <input type="text" class="form-control" id="logSearch" placeholder="CPF, nome, telefone..." style="min-width: 200px;" oninput="debounceSearch()">
+                            <input type="text" class="form-control" id="logSearch" placeholder="CPF, CNPJ, nome, telefone..." style="min-width: 200px;" oninput="debounceSearch()">
                         </div>
                         <div class="filter-group">
                             <label>Status</label>
@@ -801,7 +840,7 @@
                                     <th>Conta</th>
                                     <th>Lead</th>
                                     <th>Telefone</th>
-                                    <th>CPF</th>
+                                    <th>Documento</th>
                                     <th>Status</th>
                                     <th>Detalhes</th>
                                 </tr>
@@ -946,9 +985,17 @@
                         document.getElementById('crmApiKey').value = '';
                         document.getElementById('crmApiKey').placeholder = acc.crm_api_key_preview || 'dc_eyJ...';
                         document.getElementById('messageTemplate').value = acc.message_template || '';
+                        document.getElementById('cnpjMessageTemplate').value = acc.cnpj_message_template || `Olá! Encontrei os dados do CNPJ consultado:
+
+CNPJ: {cnpj}
+Razão Social: {razao_social}
+
+Caso precise de mais informações, estou à disposição.`;
                         document.getElementById('formatoCpf').value = acc.formato_cpf || 'mascarado';
                         document.getElementById('msgErro').value = acc.msg_erro || '';
+                        document.getElementById('msgErroCnpj').value = acc.msg_erro_cnpj || 'Desculpe, não foi possível consultar os dados do CNPJ informado.';
                         atualizarPreview();
+                        atualizarPreviewCnpj();
                     }
                 });
         }
@@ -1033,8 +1080,10 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     message_template: document.getElementById('messageTemplate').value,
+                    cnpj_message_template: document.getElementById('cnpjMessageTemplate').value,
                     formato_cpf: document.getElementById('formatoCpf').value,
-                    msg_erro: document.getElementById('msgErro').value
+                    msg_erro: document.getElementById('msgErro').value,
+                    msg_erro_cnpj: document.getElementById('msgErroCnpj').value
                 })
             })
             .then(r => r.json())
@@ -1043,27 +1092,40 @@
             });
         }
 
-        function insertVariable(variable) {
-            const textarea = document.getElementById('messageTemplate');
+        function insertVariable(variable, targetId = 'messageTemplate') {
+            const textarea = document.getElementById(targetId);
             const start = textarea.selectionStart;
             const end = textarea.selectionEnd;
             const text = textarea.value;
             textarea.value = text.substring(0, start) + variable + text.substring(end);
             textarea.focus();
             textarea.setSelectionRange(start + variable.length, start + variable.length);
-            atualizarPreview();
+            if (targetId === 'cnpjMessageTemplate') {
+                atualizarPreviewCnpj();
+            } else {
+                atualizarPreview();
+            }
         }
 
         function atualizarPreview() {
             const template = document.getElementById('messageTemplate').value;
             const preview = template
-                .replace('{cpf_mascarado}', '324.***.**98-00')
-                .replace('{cpf}', '324.075.598-00')
-                .replace('{nome}', 'João da Silva')
-                .replace('{nascimento}', '15/03/1990')
-                .replace('{sexo}', 'Masculino')
-                .replace('{nome_mae}', 'Maria da Silva');
+                .replaceAll('{cpf_mascarado}', '324.***.**98-00')
+                .replaceAll('{cpf}', '324.075.598-00')
+                .replaceAll('{nome}', 'João da Silva')
+                .replaceAll('{nascimento}', '15/03/1990')
+                .replaceAll('{sexo}', 'Masculino')
+                .replaceAll('{nome_mae}', 'Maria da Silva');
             document.getElementById('messagePreview').textContent = preview;
+        }
+
+        function atualizarPreviewCnpj() {
+            const template = document.getElementById('cnpjMessageTemplate').value;
+            const preview = template
+                .replaceAll('{cnpj}', '19.131.243/0001-97')
+                .replaceAll('{cnpj_numeros}', '19131243000197')
+                .replaceAll('{razao_social}', 'OPEN KNOWLEDGE BRASIL');
+            document.getElementById('cnpjMessagePreview').textContent = preview;
         }
 
         // ==================== JAVASCRIPT ====================
@@ -1090,25 +1152,34 @@
 
         // ==================== TESTAR ====================
         function testarCpf() {
-            const cpf = document.getElementById('cpfTeste').value;
-            if (!cpf) {
-                showToast('Digite um CPF', 'error');
+            const documento = document.getElementById('cpfTeste').value;
+            if (!documento) {
+                showToast('Digite um CPF ou CNPJ', 'error');
                 return;
             }
             document.getElementById('resultadoTeste').textContent = 'Consultando...';
             fetch('/api/consultar-cpf', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ cpf })
+                body: JSON.stringify({ documento })
             })
             .then(r => r.json())
             .then(data => {
                 if (data.success && data.dados) {
                     const d = data.dados;
-                    document.getElementById('resultadoTeste').textContent = 
-                        `Nome: ${d.NOME || d.nome}\nNascimento: ${d.NASC || d.nascimento}\nSexo: ${d.SEXO || d.sexo}\nMãe: ${d.NOME_MAE || d.nome_mae}`;
+                    if (data.tipo === 'cnpj') {
+                        document.getElementById('resultadoTeste').textContent =
+                            `CNPJ: ${data.cnpj_formatado || d.cnpj || data.cnpj}
+Razão Social: ${d.razao_social || d.nome || 'Não disponível'}`;
+                    } else {
+                        document.getElementById('resultadoTeste').textContent = 
+                            `Nome: ${d.NOME || d.nome}
+Nascimento: ${d.NASC || d.nascimento}
+Sexo: ${d.SEXO || d.sexo}
+Mãe: ${d.NOME_MAE || d.nome_mae}`;
+                    }
                 } else {
-                    document.getElementById('resultadoTeste').textContent = data.error || 'CPF não encontrado';
+                    document.getElementById('resultadoTeste').textContent = data.error || 'CPF/CNPJ não encontrado';
                 }
             });
         }
