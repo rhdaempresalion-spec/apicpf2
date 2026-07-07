@@ -71,6 +71,12 @@ def criar_sessao_otimizada():
     adapter = HTTPAdapter(max_retries=retry_strategy, pool_connections=20, pool_maxsize=20)
     session.mount("http://", adapter)
     session.mount("https://", adapter)
+    # Headers padrão para evitar bloqueio do Cloudflare
+    session.headers.update({
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7'
+    })
     return session
 
 crm_session = criar_sessao_otimizada()
@@ -269,18 +275,49 @@ def buscar_mensagens_conversa(conversation_id, api_key):
         "Connection": "keep-alive"
     }
     try:
-        response = crm_session.get(url, headers=headers, timeout=10)
+        response = crm_session.get(url, headers=headers, timeout=15)
         response.raise_for_status()
         data = response.json()
-        messages = data.get('messages', data.get('data', [])) if isinstance(data, dict) else data
-        if isinstance(messages, list):
-            received_messages = [m for m in messages if m.get('received') == True]
-            if received_messages:
-                received_messages.sort(key=lambda x: x.get('createdAt', x.get('timestamp', '')), reverse=True)
-                return received_messages[:3]
-            return []
-        return messages
-    except:
+        
+        # A API DataCrazy pode retornar diferentes formatos:
+        # 1. Um objeto único (MessageDto) - formato atual da documentação
+        # 2. Um array de mensagens diretamente
+        # 3. Um dict com chave 'messages', 'data', ou 'items'
+        messages = []
+        
+        if isinstance(data, list):
+            # Formato: array direto de mensagens
+            messages = data
+        elif isinstance(data, dict):
+            if 'body' in data and 'conversationId' in data:
+                # Formato: objeto único MessageDto (retorno atual da API)
+                messages = [data]
+            elif 'messages' in data:
+                messages = data['messages']
+            elif 'data' in data:
+                msg_data = data['data']
+                messages = msg_data if isinstance(msg_data, list) else [msg_data]
+            elif 'items' in data:
+                messages = data['items']
+            else:
+                # Tenta usar o dict inteiro como uma mensagem
+                messages = [data]
+        
+        if not isinstance(messages, list):
+            messages = [messages] if messages else []
+        
+        # Filtra apenas mensagens recebidas (do contato)
+        received_messages = [m for m in messages if m.get('received') == True]
+        
+        # Se não encontrou mensagens recebidas, tenta todas as mensagens
+        if not received_messages:
+            received_messages = [m for m in messages if m.get('body')]
+        
+        if received_messages:
+            received_messages.sort(key=lambda x: x.get('createdAt', x.get('timestamp', '')), reverse=True)
+            return received_messages[:10]
+        return []
+    except Exception as e:
         return None
 
 def consultar_cpf(cpf):
@@ -695,11 +732,43 @@ def gerar_javascript(account_id):
     const leadName = await session.getValue('leadName');
     
     let mensagem = null;
-    try {{ mensagem = await session.getValue('lastMessage.body'); }} catch (e) {{}}
+    
+    // Tenta capturar a mensagem de múltiplas formas (compatibilidade com diferentes versões do DataCrazy)
+    const tentativas = [
+        'lastMessage.body',
+        'lastMessage.text',
+        'lastMessage.content',
+        'message.body',
+        'message.text',
+        'message',
+        'input.body',
+        'input.text',
+        'input',
+        'lastReceivedMessage.body',
+        'lastReceivedMessage.text',
+        'lastReceivedMessage'
+    ];
+    
+    for (const campo of tentativas) {{
+        if (mensagem) break;
+        try {{
+            const val = await session.getValue(campo);
+            if (val && typeof val === 'string' && val.trim()) {{
+                mensagem = val.trim();
+            }} else if (val && typeof val === 'object') {{
+                mensagem = val.body || val.text || val.content || null;
+            }}
+        }} catch (e) {{}}
+    }}
+    
+    // Fallback: tenta pegar lastMessage como objeto
     if (!mensagem) {{
         try {{
             const lm = await session.getValue('lastMessage');
-            if (lm) mensagem = lm.body || lm.text || lm;
+            if (lm) {{
+                if (typeof lm === 'string') mensagem = lm;
+                else mensagem = lm.body || lm.text || lm.content || JSON.stringify(lm);
+            }}
         }} catch (e) {{}}
     }}
     
@@ -752,14 +821,31 @@ def webhook_datacrazy():
                 except:
                     pass
                 for msg in mensagens[:10]:
-                    body = msg.get('body', '')
+                    body = msg.get('body', '') or ''
                     if body:
                         documento_tipo, documento = extrair_documento(body)
                         if documento:
                             break
+                    # Tenta também no campo 'text' caso exista
+                    if not documento:
+                        text = msg.get('text', '') or ''
+                        if text:
+                            documento_tipo, documento = extrair_documento(text)
+                            if documento:
+                                break
+                    # Tenta no campo 'content' caso exista
+                    if not documento:
+                        content = msg.get('content', '') or ''
+                        if content:
+                            documento_tipo, documento = extrair_documento(content)
+                            if documento:
+                                break
         
         if not documento:
-            add_log(account_id, 'CONSULTA', '-', 'Erro', 'CPF/CNPJ não encontrado', lead_phone, lead_name)
+            debug_info = f'msg_direta={bool(mensagem_direta)}'
+            if mensagem_direta:
+                debug_info += f' | msg_valor="{str(mensagem_direta)[:50]}"'
+            add_log(account_id, 'CONSULTA', '-', 'Erro', f'CPF/CNPJ não encontrado ({debug_info})', lead_phone, lead_name)
             return jsonify({"success": False, "error": "CPF ou CNPJ não encontrado nas mensagens"}), 404
         
         if documento_tipo == 'cnpj':
@@ -822,6 +908,38 @@ def webhook_datacrazy():
             "account": account.get('name')
         })
         
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# ==================== DEBUG: TESTAR BUSCA DE MENSAGENS ====================
+
+@app.route('/api/debug/messages/<conversation_id>', methods=['GET'])
+def debug_messages(conversation_id):
+    """Endpoint de debug para testar a busca de mensagens de uma conversa."""
+    api_key = request.headers.get('X-CRM-API-Key') or request.args.get('api_key', '')
+    if not api_key:
+        return jsonify({"success": False, "error": "Informe a api_key via header X-CRM-API-Key ou query param"}), 400
+    
+    url = f"{CRM_API_BASE}/api/v1/conversations/{conversation_id}/messages"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
+    try:
+        response = crm_session.get(url, headers=headers, timeout=15)
+        raw_data = response.json()
+        mensagens = buscar_mensagens_conversa(conversation_id, api_key)
+        
+        return jsonify({
+            "success": True,
+            "http_status": response.status_code,
+            "raw_response_type": type(raw_data).__name__,
+            "raw_response_keys": list(raw_data.keys()) if isinstance(raw_data, dict) else f"array[{len(raw_data)}]",
+            "raw_response_preview": str(raw_data)[:500],
+            "parsed_messages_count": len(mensagens) if mensagens else 0,
+            "parsed_messages": mensagens[:3] if mensagens else []
+        })
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
