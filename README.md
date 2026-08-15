@@ -51,6 +51,8 @@ Variáveis disponíveis para CPF:
 - `{sexo}` - Sexo
 - `{nome_mae}` - Nome da mãe
 
+Na mesma seção, a opção **Nome do titular na mensagem** permite escolher entre exibir o nome em **MAIÚSCULAS** ou mantê-lo como retornado pela consulta. A escolha é salva por conta e altera somente a mensagem formatada; o campo `dados` da consulta e os demais dados existentes permanecem preservados. Para contas criadas antes desta opção, o padrão é maiúsculas, mantendo o comportamento anterior.
+
 Variáveis para CNPJ na resposta automática padrão:
 - `{cnpj}` - CNPJ formatado
 - `{cnpj_numeros}` - CNPJ apenas com números

@@ -678,6 +678,14 @@
                                 </select>
                             </div>
                             <div class="mb-3">
+                                <label class="form-label">Nome do titular na mensagem</label>
+                                <select class="form-select" id="nomeEmMaiusculas" onchange="atualizarPreview()">
+                                    <option value="true">Exibir em MAIÚSCULAS</option>
+                                    <option value="false">Manter como retornado pela consulta</option>
+                                </select>
+                                <small class="text-muted">Esta opção altera somente a mensagem enviada. Os dados originais da consulta continuam preservados.</small>
+                            </div>
+                            <div class="mb-3">
                                 <label class="form-label">Mensagem de Erro do CPF</label>
                                 <textarea class="form-control" id="msgErro" rows="2"></textarea>
                             </div>
@@ -992,6 +1000,7 @@ Razão Social: {razao_social}
 
 Caso precise de mais informações, estou à disposição.`;
                         document.getElementById('formatoCpf').value = acc.formato_cpf || 'mascarado';
+                        document.getElementById('nomeEmMaiusculas').value = acc.nome_em_maiusculas === false ? 'false' : 'true';
                         document.getElementById('msgErro').value = acc.msg_erro || '';
                         document.getElementById('msgErroCnpj').value = acc.msg_erro_cnpj || 'Desculpe, não foi possível consultar os dados do CNPJ informado.';
                         atualizarPreview();
@@ -1082,6 +1091,7 @@ Caso precise de mais informações, estou à disposição.`;
                     message_template: document.getElementById('messageTemplate').value,
                     cnpj_message_template: document.getElementById('cnpjMessageTemplate').value,
                     formato_cpf: document.getElementById('formatoCpf').value,
+                    nome_em_maiusculas: document.getElementById('nomeEmMaiusculas').value === 'true',
                     msg_erro: document.getElementById('msgErro').value,
                     msg_erro_cnpj: document.getElementById('msgErroCnpj').value
                 })
@@ -1109,13 +1119,16 @@ Caso precise de mais informações, estou à disposição.`;
 
         function atualizarPreview() {
             const template = document.getElementById('messageTemplate').value;
+            const nomeEmMaiusculas = document.getElementById('nomeEmMaiusculas')?.value !== 'false';
+            const nomeExibicao = nomeEmMaiusculas ? 'JOÃO DA SILVA' : 'João da Silva';
+            const nomeMaeExibicao = nomeEmMaiusculas ? 'MARIA DA SILVA' : 'Maria da Silva';
             const preview = template
                 .replaceAll('{cpf_mascarado}', '324.***.**98-00')
                 .replaceAll('{cpf}', '324.075.598-00')
-                .replaceAll('{nome}', 'João da Silva')
+                .replaceAll('{nome}', nomeExibicao)
                 .replaceAll('{nascimento}', '15/03/1990')
                 .replaceAll('{sexo}', 'Masculino')
-                .replaceAll('{nome_mae}', 'Maria da Silva');
+                .replaceAll('{nome_mae}', nomeMaeExibicao);
             document.getElementById('messagePreview').textContent = preview;
         }
 

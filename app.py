@@ -44,6 +44,22 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'admin123')
 # CORREÇÃO: Limite configurável de logs (0 = ilimitado)
 MAX_LOGS_PER_ACCOUNT = int(os.environ.get('MAX_LOGS_PER_ACCOUNT', '0'))
 
+
+def valor_booleano_configuracao(valor, padrao=True):
+    """Converte valores antigos ou recebidos pela API em booleano."""
+    if isinstance(valor, bool):
+        return valor
+    if isinstance(valor, (int, float)):
+        return bool(valor)
+    if isinstance(valor, str):
+        valor_normalizado = valor.strip().lower()
+        if valor_normalizado in {'true', '1', 'sim', 's', 'yes', 'on'}:
+            return True
+        if valor_normalizado in {'false', '0', 'não', 'nao', 'n', 'no', 'off'}:
+            return False
+    return padrao
+
+
 DEFAULT_TEMPLATE = """Olá! Encontrei os dados do CPF consultado:
 
 CPF: {cpf_mascarado}
@@ -101,6 +117,8 @@ def load_accounts():
             for acc in accounts.values():
                 acc.setdefault('cnpj_message_template', DEFAULT_CNPJ_TEMPLATE)
                 acc.setdefault('msg_erro_cnpj', 'Desculpe, não foi possível consultar os dados do CNPJ informado.')
+                # Contas antigas continuam com o comportamento anterior: nomes em maiúsculas.
+                acc.setdefault('nome_em_maiusculas', True)
             return accounts
     except:
         return {}
@@ -399,18 +417,26 @@ def formatar_mensagem(dados_cpf, cpf, account):
     if not dados_cpf:
         return msg_erro
     
+    exibir_nomes_maiusculos = valor_booleano_configuracao(
+        account.get('nome_em_maiusculas', True),
+        padrao=True
+    )
+
     nome_original = dados_cpf.get('NOME', dados_cpf.get('nome', 'Não disponível'))
-    nome_maiusculo = nome_original.upper() if nome_original else 'NÃO DISPONÍVEL'
+    nome_original = str(nome_original) if nome_original else 'Não disponível'
+    nome_exibicao = nome_original.upper() if exibir_nomes_maiusculos else nome_original
+
     nome_mae_original = dados_cpf.get('NOME_MAE', dados_cpf.get('nome_mae', ''))
-    nome_mae_maiusculo = nome_mae_original.upper() if nome_mae_original else ''
+    nome_mae_original = str(nome_mae_original) if nome_mae_original else ''
+    nome_mae_exibicao = nome_mae_original.upper() if exibir_nomes_maiusculos else nome_mae_original
     
     dados = {
         'cpf': f"{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}",
         'cpf_mascarado': formatar_cpf(cpf, formato),
-        'nome': nome_maiusculo,
+        'nome': nome_exibicao,
         'nascimento': dados_cpf.get('NASC', dados_cpf.get('nascimento', '')),
         'sexo': dados_cpf.get('SEXO', dados_cpf.get('sexo', '')),
-        'nome_mae': nome_mae_maiusculo
+        'nome_mae': nome_mae_exibicao
     }
     
     try:
@@ -481,6 +507,7 @@ def api_accounts():
         'message_template': DEFAULT_TEMPLATE,
         'cnpj_message_template': DEFAULT_CNPJ_TEMPLATE,
         'formato_cpf': 'mascarado',
+        'nome_em_maiusculas': True,
         'msg_erro': 'Desculpe, não foi possível consultar os dados do CPF informado.',
         'msg_erro_cnpj': 'Desculpe, não foi possível consultar os dados do CNPJ informado.',
         'created_at': datetime.now().isoformat()
@@ -513,6 +540,11 @@ def api_account(account_id):
             accounts[account_id]['cnpj_message_template'] = data['cnpj_message_template']
         if 'formato_cpf' in data:
             accounts[account_id]['formato_cpf'] = data['formato_cpf']
+        if 'nome_em_maiusculas' in data:
+            accounts[account_id]['nome_em_maiusculas'] = valor_booleano_configuracao(
+                data.get('nome_em_maiusculas'),
+                padrao=True
+            )
         if 'msg_erro' in data:
             accounts[account_id]['msg_erro'] = data['msg_erro']
         if 'msg_erro_cnpj' in data:
