@@ -758,66 +758,85 @@ def gerar_javascript(account_id):
         api_url = api_url.replace('http://', 'https://')
     api_key = acc.get('crm_api_key', '')
     
-    codigo = f'''(async () => {{
-    const conversationId = await session.getValue('conversationId');
-    const leadPhone = await session.getValue('leadPhone');
-    const leadName = await session.getValue('leadName');
-    
+    codigo = f'''try {{
+    const obterValor = async (campo) => {{
+        try {{ return await session.getValue(campo); }} catch (error) {{ return null; }}
+    }};
+
+    const textoDaMensagem = (valor) => {{
+        if (typeof valor === 'string' && valor.trim()) return valor.trim();
+        if (valor && typeof valor === 'object') {{
+            for (const campo of ['body', 'text', 'content', 'message']) {{
+                const texto = valor[campo];
+                if (typeof texto === 'string' && texto.trim()) return texto.trim();
+                if (texto && typeof texto === 'object') {{
+                    const interno = texto.body || texto.text || texto.content;
+                    if (typeof interno === 'string' && interno.trim()) return interno.trim();
+                }}
+            }}
+        }}
+        return null;
+    }};
+
+    const conversationId = await obterValor('conversationId');
+    const leadPhone = await obterValor('leadPhone');
+    const leadName = await obterValor('leadName');
+
     let mensagem = null;
-    
-    // Tenta capturar a mensagem de múltiplas formas (compatibilidade com diferentes versões do DataCrazy)
     const tentativas = [
-        'lastMessage.body',
-        'lastMessage.text',
-        'lastMessage.content',
-        'message.body',
-        'message.text',
-        'message',
-        'input.body',
-        'input.text',
-        'input',
-        'lastReceivedMessage.body',
-        'lastReceivedMessage.text',
-        'lastReceivedMessage'
+        'lastMessage.body', 'lastMessage.text', 'lastMessage.content', 'lastMessage',
+        'message.body', 'message.text', 'message.content', 'message',
+        'input.body', 'input.text', 'input',
+        'lastReceivedMessage.body', 'lastReceivedMessage.text', 'lastReceivedMessage'
     ];
-    
     for (const campo of tentativas) {{
+        mensagem = textoDaMensagem(await obterValor(campo));
         if (mensagem) break;
-        try {{
-            const val = await session.getValue(campo);
-            if (val && typeof val === 'string' && val.trim()) {{
-                mensagem = val.trim();
-            }} else if (val && typeof val === 'object') {{
-                mensagem = val.body || val.text || val.content || null;
-            }}
-        }} catch (e) {{}}
     }}
-    
-    // Fallback: tenta pegar lastMessage como objeto
-    if (!mensagem) {{
-        try {{
-            const lm = await session.getValue('lastMessage');
-            if (lm) {{
-                if (typeof lm === 'string') mensagem = lm;
-                else mensagem = lm.body || lm.text || lm.content || JSON.stringify(lm);
-            }}
-        }} catch (e) {{}}
+
+    if (!conversationId) {{
+        return {{ sucesso: false, erro: true,
+            mensagem: 'O DataCrazy não forneceu conversationId a este bloco JavaScript.',
+            debug: {{ campo: 'conversationId' }} }};
     }}
-    
-    if (!conversationId) return;
-    
+
     const response = await fetch('{api_url}/api/webhook/datacrazy', {{
         method: 'POST',
-        headers: {{ 
+        headers: {{
             'Content-Type': 'application/json',
             'X-CRM-API-Key': '{api_key}'
         }},
         body: JSON.stringify({{ conversationId, leadPhone, leadName, mensagem }})
     }});
-    
-    const data = await response.json();
-    console.log('Resposta:', JSON.stringify(data));
-}})();'''
+
+    const responseText = await response.text();
+    let data = {{}};
+    try {{ data = responseText ? JSON.parse(responseText) : {{}}; }}
+    catch (parseError) {{
+        return {{ sucesso: false, erro: true,
+            mensagem: 'O servidor retornou uma resposta que não é JSON.',
+            debug: {{ httpStatus: response.status }} }};
+    }}
+
+    const sucesso = response.ok && data.success === true;
+    return {{
+        sucesso,
+        erro: !sucesso,
+        mensagem: sucesso
+            ? (data.mensagem_enviada ? 'Consulta concluída e resposta enviada.' : 'Consulta concluída, mas a resposta não foi enviada.')
+            : (data.error || `Erro HTTP ${{response.status}} no serviço de consulta.`),
+        dados: {{
+            httpStatus: response.status,
+            tipo: data.tipo || null,
+            documentoEncontrado: Boolean(data.tipo),
+            mensagemEnviada: data.mensagem_enviada === true
+        }}
+    }};
+}} catch (error) {{
+    return {{ sucesso: false, erro: true,
+        mensagem: 'Falha ao chamar o serviço de consulta.',
+        debug: error && error.message ? error.message : String(error) }};
+}}'''
     
     return jsonify({"success": True, "javascript": codigo})
 
