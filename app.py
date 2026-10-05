@@ -229,7 +229,7 @@ def extrair_cnpj(texto):
     if not texto:
         return None
 
-    padrao_cnpj = r'\d{2}[\.]?\d{3}[\.]?\d{3}[\/]?\d{4}[\-]?\d{2}'
+    padrao_cnpj = r'\b\d{2}[\.]?\d{3}[\.]?\d{3}[\/]?\d{4}[\-]?\d{2}\b'
     for match in re.findall(padrao_cnpj, texto):
         cnpj = somente_numeros(match)
         if validar_cnpj_rapido(cnpj):
@@ -252,7 +252,7 @@ def extrair_cpf(texto):
     if not texto:
         return None
 
-    padrao_cpf = r'\d{3}[\.]?\d{3}[\.]?\d{3}[\-]?\d{2}'
+    padrao_cpf = r'\b\d{3}[\.]?\d{3}[\.]?\d{3}[\-]?\d{2}\b'
     for match in re.findall(padrao_cpf, texto):
         cpf = somente_numeros(match)
         if validar_cpf_rapido(cpf):
